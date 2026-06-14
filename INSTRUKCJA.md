@@ -53,3 +53,4 @@ Gdy Offhand kupi domenę (np. `signoff.offhand.pl`): w repozytorium GitHub → S
 - 5 błędnych PIN-ów = rosnąca blokada konta.
 - Każda zgoda ma kartę dowodową (audit trail), sumę SHA-256 i miejsce w łańcuchu integralności — przycisk **🛡 Weryfikuj integralność** wykrywa każdą manipulację.
 - Auto-wylogowanie po 5 minutach bezczynności.
+- **Aplikacja sama się aktualizuje** przy dostępie do internetu — gdy pojawi się nowa wersja, na dole wyświetla pasek **„Odśwież"** (albo wchodzi automatycznie przy następnym otwarciu). Nigdy nie przerywa zbierania zgody.
