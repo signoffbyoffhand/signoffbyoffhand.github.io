@@ -185,10 +185,46 @@ function initHelp() {
     document.addEventListener(ev, () => clearTimeout(timer), { passive: true }));
 }
 
+/* Automatyczna aktualizacja PWA: gdy jest internet, nowa wersja pobiera się w tle.
+   Nie przerywa pracy — pokazuje pasek „Odśwież", a przy ponownym otwarciu appki wchodzi sama. */
+function setupServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return; refreshing = true; location.reload();
+  });
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => {
+    const check = () => { if (navigator.onLine) reg.update().catch(() => {}); };
+    check();
+    setInterval(check, 30 * 60 * 1000);                       // co 30 min
+    window.addEventListener("online", check);                  // od razu po odzyskaniu sieci
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
+    if (reg.waiting && navigator.serviceWorker.controller) showUpdateBanner(reg.waiting);
+    reg.addEventListener("updatefound", () => {
+      const nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener("statechange", () => {
+        if (nw.state === "installed" && navigator.serviceWorker.controller) showUpdateBanner(nw);
+      });
+    });
+  }).catch(() => {});
+}
+function showUpdateBanner(worker) {
+  if (document.getElementById("update-banner")) return;
+  const bar = document.createElement("div");
+  bar.id = "update-banner";
+  bar.innerHTML = `<span>✨ Dostępna nowa wersja aplikacji</span><button class="btn" id="btn-update">Odśwież</button>`;
+  document.body.appendChild(bar);
+  $("btn-update").addEventListener("click", () => {
+    $("btn-update").textContent = "Aktualizuję…";
+    worker.postMessage({ type: "SKIP_WAITING" });
+  });
+}
+
 async function boot() {
   initHelp();
   dbh = await openDB();
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  setupServiceWorker();
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
   S.config = await metaGet("config") || null;
   updateNetBadge();
