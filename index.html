@@ -15,49 +15,33 @@
 </head>
 <body>
 
-<!-- ===== EKRAN: PIERWSZE URUCHOMIENIE ===== -->
-<section id="view-setup" class="view" hidden>
-  <div class="lock-card">
-    <div class="card-head">
-      <div class="wordmark sm"><span class="nm">Sign<b>Off</b></span><span class="by">by OFFHAND</span></div>
-      <img class="brand-mark-corner" src="icons/offhand-logo.svg" alt="Offhand">
-    </div>
-    <h1>Pierwsza konfiguracja</h1>
-    <p class="muted">Tworzone są konta administratorów. Dane szyfrowane na urządzeniu (AES-256-GCM). <strong>PIN-y nie są nigdzie zapisywane w postaci jawnej.</strong></p>
-    <label>Firma / administrator danych
-      <input type="text" id="setup-producer" placeholder="np. Offhand Hanna Nobis">
-    </label>
-    <label>Nazwa pierwszego projektu
-      <input type="text" id="setup-project" placeholder="np. „Dokument o…”">
-    </label>
-    <div class="admin-setup">
-      <h3>Administrator 1: Hanna Nobis</h3>
-      <div class="grid2">
-        <label>PIN (min. 6 cyfr)<input type="password" id="setup-pin-h" inputmode="numeric" autocomplete="new-password" placeholder="••••••"></label>
-        <label>Powtórz PIN<input type="password" id="setup-pin-h2" inputmode="numeric" autocomplete="new-password" placeholder="••••••"></label>
-      </div>
-      <h3>Administrator 2: Marek Żak</h3>
-      <div class="grid2">
-        <label>PIN (min. 6 cyfr)<input type="password" id="setup-pin-m" inputmode="numeric" autocomplete="new-password" placeholder="••••••"></label>
-        <label>Powtórz PIN<input type="password" id="setup-pin-m2" inputmode="numeric" autocomplete="new-password" placeholder="••••••"></label>
-      </div>
-    </div>
-    <p id="setup-error" class="error" hidden></p>
-    <button class="btn primary big" id="btn-setup">Utwórz zaszyfrowany magazyn</button>
-    <p class="credit">przygotował Marek Żak · dla Offhand Hanna Nobis</p>
-  </div>
-</section>
-
-<!-- ===== EKRAN: LOGOWANIE ===== -->
+<!-- ===== EKRAN: LOGOWANIE / PIERWSZE URUCHOMIENIE ===== -->
 <section id="view-lock" class="view" hidden>
   <div class="lock-card">
     <div class="wordmark"><span class="nm">Sign<b>Off</b></span><span class="by">by OFFHAND</span></div>
     <h1 id="lock-title">Zaloguj się</h1>
-    <p class="muted">Wybierz konto i podaj PIN.</p>
-    <div id="account-buttons" class="op-buttons"></div>
-    <input type="password" id="lock-pin" inputmode="numeric" autocomplete="current-password" placeholder="PIN" class="pin-input">
-    <p id="lock-error" class="error" hidden></p>
-    <button class="btn primary big" id="btn-unlock">Zaloguj</button>
+
+    <!-- pierwsze uruchomienie: ustaw PIN -->
+    <div id="firstrun" hidden>
+      <p class="muted">Ustaw PIN, aby rozpocząć. Dane od razu szyfrują się automatycznie. Firmę, projekty i kolejne osoby ustawisz potem w aplikacji.</p>
+      <label>Twoje imię i nazwisko<input type="text" id="setup-name" value="Hanna Nobis" autocomplete="off"></label>
+      <div class="grid2">
+        <label>PIN (min. 6 cyfr)<input type="password" id="setup-pin" inputmode="numeric" autocomplete="new-password" placeholder="••••••"></label>
+        <label>Powtórz PIN<input type="password" id="setup-pin2" inputmode="numeric" autocomplete="new-password" placeholder="••••••"></label>
+      </div>
+      <p id="setup-error" class="error" hidden></p>
+      <button class="btn primary big" id="btn-setup">Rozpocznij</button>
+    </div>
+
+    <!-- normalne logowanie -->
+    <div id="loginbox">
+      <p class="muted">Wybierz konto i podaj PIN.</p>
+      <div id="account-buttons" class="op-buttons"></div>
+      <input type="password" id="lock-pin" inputmode="numeric" autocomplete="current-password" placeholder="PIN" class="pin-input">
+      <p id="lock-error" class="error" hidden></p>
+      <button class="btn primary big" id="btn-unlock">Zaloguj</button>
+    </div>
+
     <p class="tiny muted">Tryb offline ✓ · AES-256-GCM ✓ · Blokada po 5 błędnych próbach ✓ · Kopia w chmurze E2E ✓</p>
     <div class="lock-mark"><img src="icons/offhand-logo.svg" alt="Offhand"></div>
     <p class="credit">przygotował Marek Żak · dla Offhand Hanna Nobis</p>
@@ -73,8 +57,8 @@
       <span id="sync-badge" class="badge offline" data-help="Stan kopii w chmurze. Godzina = ostatnia udana synchronizacja; „oczekuje” = wyśle przy najbliższym połączeniu.">☁ —</span>
       <span id="net-status" class="badge offline" data-help="Stan połączenia z internetem. Aplikacja działa w pełni offline — zgody zbiera się bez sieci.">offline</span>
       <button class="btn ghost" id="btn-settings" data-help="Ustawienia: projekty, dokumenty, konta, chmura (administrator) oraz zmiana własnego PIN.">⚙</button>
-      <button class="btn logout" id="btn-lock" data-help="Wylogowanie i zaszyfrowanie danych. Następna osoba musi podać swój PIN.">Wyloguj</button>
       <img class="brand-mark-corner" src="icons/offhand-logo.svg" alt="Offhand">
+      <button class="btn logout" id="btn-lock" data-help="Wylogowanie i zaszyfrowanie danych. Następna osoba musi podać swój PIN.">Wyloguj</button>
     </div>
   </header>
   <main class="container">

@@ -212,7 +212,11 @@ select {
 .op-buttons { display: flex; flex-direction: column; gap: 8px; margin: 16px 0 4px; }
 .op-btn { text-align: left; font-size: 1.05rem; }
 .proj-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 18px; margin: 12px 0; }
-.proj-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.proj-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; }
+.proj-name-lbl { display: flex; align-items: center; gap: 6px; flex: 1; margin: 0; font-weight: 700; }
+.proj-name { font-size: 1.05rem; font-weight: 700; border: 1.5px solid transparent; background: transparent; padding: 4px 8px; margin: 0; border-radius: 8px; max-width: 100%; }
+.proj-name:hover { border-color: var(--line); }
+.proj-name:focus { border-color: var(--amber); background: #fff; outline: none; }
 .proj-card textarea {
   width: 100%; margin-top: 5px; padding: 10px 12px; font: inherit; font-size: .92rem;
   border: 1.5px solid var(--line); border-radius: 10px; resize: vertical; color: var(--ink);

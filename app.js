@@ -96,7 +96,7 @@ const S = {
   syncTimer: null,
 };
 const $ = (id) => document.getElementById(id);
-const views = ["view-setup", "view-lock", "view-home", "view-wizard", "view-detail", "view-settings"];
+const views = ["view-lock", "view-home", "view-wizard", "view-detail", "view-settings"];
 function show(view) { views.forEach(v => $(v).hidden = v !== view); window.scrollTo(0, 0); }
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const isAdmin = () => S.user && S.user.role === "admin";
@@ -233,7 +233,7 @@ async function boot() {
   window.addEventListener("online", () => { updateNetBadge(); scheduleSync(); flushOutbox(); });
   window.addEventListener("offline", updateNetBadge);
   ["click", "keydown", "pointerdown"].forEach(ev => document.addEventListener(ev, resetLockTimer, { passive: true }));
-  if (!S.config) show("view-setup"); else enterLogin();
+  enterLogin();
 }
 function updateNetBadge() {
   const b = $("net-status");
@@ -251,38 +251,26 @@ function lock() {
   enterLogin();
 }
 
-/* --- pierwsze uruchomienie: dwa konta administratorów --- */
+/* --- pierwsze uruchomienie: tylko PIN pierwszego administratora; resztę ustawia się w aplikacji --- */
 $("btn-setup").addEventListener("click", async () => {
-  const producer = $("setup-producer").value.trim();
-  const project = $("setup-project").value.trim();
-  const ph = $("setup-pin-h").value, ph2 = $("setup-pin-h2").value;
-  const pm = $("setup-pin-m").value, pm2 = $("setup-pin-m2").value;
+  const name = $("setup-name").value.trim() || "Administrator";
+  const pin = $("setup-pin").value, pin2 = $("setup-pin2").value;
   const err = $("setup-error"); err.hidden = true;
   const fail = (m) => { err.textContent = m; err.hidden = false; };
-  if (!producer || !project) return fail("Podaj nazwę firmy i projektu.");
-  if (!PIN_RE.test(ph)) return fail("PIN Hanny Nobis: min. 6 cyfr.");
-  if (ph !== ph2) return fail("PIN-y Hanny Nobis nie są zgodne.");
-  if (!PIN_RE.test(pm)) return fail("PIN Marka Żaka: min. 6 cyfr.");
-  if (pm !== pm2) return fail("PIN-y Marka Żaka nie są zgodne.");
-  if (ph === pm) return fail("PIN-y administratorów muszą się różnić.");
+  if (!PIN_RE.test(pin)) return fail("PIN musi mieć co najmniej 6 cyfr.");
+  if (pin !== pin2) return fail("PIN-y nie są zgodne.");
 
   const dekRaw = crypto.getRandomValues(new Uint8Array(32)).buffer;
-  const mkAccount = async (name, role, pin) => {
-    const salt = b64.enc(crypto.getRandomValues(new Uint8Array(16)));
-    const kek = await deriveKEK(pin, salt);
-    return { id: uuid(), name, role, salt, wrap: await encryptBytes(kek, dekRaw), fails: 0, lockUntil: 0, active: true, createdAt: new Date().toISOString() };
-  };
-  const accounts = [
-    await mkAccount("Hanna Nobis", "admin", ph),
-    await mkAccount("Marek Żak", "admin", pm),
-  ];
-  S.config = { v: 3, deviceId: uuid(), deviceName: producer.slice(0, 40) + " · " + (navigator.platform || "urządzenie"), accounts, chainHead: "GENESIS", lastSync: null };
+  const salt = b64.enc(crypto.getRandomValues(new Uint8Array(16)));
+  const kek = await deriveKEK(pin, salt);
+  const acc = { id: uuid(), name, role: "admin", salt, wrap: await encryptBytes(kek, dekRaw), fails: 0, lockUntil: 0, active: true, createdAt: new Date().toISOString() };
+  S.config = { v: 3, deviceId: uuid(), deviceName: "SignOff · " + (navigator.platform || "urządzenie"), accounts: [acc], chainHead: "GENESIS", lastSync: null };
   await saveConfig();
   S.dekRaw = dekRaw;
   S.key = await importDEK(dekRaw);
-  S.user = accounts[0];
+  S.user = acc;
   const pid = uuid();
-  S.vault = { producer, email: "", projects: [{ id: pid, name: project, customText: "", files: [], allowedUserIds: [] }], activeProjectId: pid, sync: { url: "", key: "", auto: true } };
+  S.vault = { producer: "Offhand Hanna Nobis", email: "", projects: [{ id: pid, name: "Projekt 1", customText: "", files: [], allowedUserIds: [], requirePhoto: false }], activeProjectId: pid, sync: { url: "", key: "", auto: true } };
   await saveVault();
   enterHome();
 });
@@ -290,9 +278,20 @@ $("btn-setup").addEventListener("click", async () => {
 /* --- logowanie kontem --- */
 let accSelected = null;
 function enterLogin() {
+  $("lock-error").hidden = true;
+  if ($("setup-error")) $("setup-error").hidden = true;
+  // pierwsze uruchomienie — brak konta: ten sam ekran, tryb „ustaw PIN"
+  if (!S.config) {
+    $("lock-title").textContent = "Witaj";
+    $("firstrun").hidden = false;
+    $("loginbox").hidden = true;
+    show("view-lock");
+    return;
+  }
+  $("firstrun").hidden = true;
+  $("loginbox").hidden = false;
   accSelected = null;
   $("lock-pin").value = "";
-  $("lock-error").hidden = true;
   $("lock-title").textContent = "Zaloguj się";
   const box = $("account-buttons");
   box.innerHTML = "";
@@ -1163,7 +1162,7 @@ function renderProjects() {
     const card = document.createElement("div");
     card.className = "proj-card";
     card.innerHTML = `
-      <div class="proj-head"><b>📁 ${esc(p.name)}</b><span class="tiny muted">${count} zgód</span></div>
+      <div class="proj-head"><label class="proj-name-lbl">📁 <input class="proj-name" value="${esc(p.name)}" placeholder="Nazwa projektu"></label><span class="tiny muted">${count} zgód</span></div>
       <label class="tiny">Własna treść zgody (puste = standardowa klauzula wizerunkowa; RODO dołączane zawsze)
         <textarea rows="3" placeholder="np. treść regulaminu wydarzenia…">${esc(p.customText || "")}</textarea>
       </label>
@@ -1219,9 +1218,12 @@ function renderProjects() {
       catch (ex) { alert(ex.message); }
     });
     card.querySelector("[data-act=savetext]").addEventListener("click", async () => {
+      const newName = card.querySelector(".proj-name").value.trim();
+      if (newName) p.name = newName;
       p.customText = card.querySelector("textarea").value;
       await saveVault();
       alert("Zapisano.");
+      renderProjects();
     });
     const del = card.querySelector("[data-act=del]");
     if (del) del.addEventListener("click", async () => {
