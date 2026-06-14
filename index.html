@@ -29,12 +29,12 @@
       <input type="text" id="setup-project" placeholder="np. „Dokument o…”">
     </label>
     <div class="admin-setup">
-      <h3>👑 Administrator 1: Hanna Nobis</h3>
+      <h3>Administrator 1: Hanna Nobis</h3>
       <div class="grid2">
         <label>PIN (min. 6 cyfr)<input type="password" id="setup-pin-h" inputmode="numeric" autocomplete="new-password" placeholder="••••••"></label>
         <label>Powtórz PIN<input type="password" id="setup-pin-h2" inputmode="numeric" autocomplete="new-password" placeholder="••••••"></label>
       </div>
-      <h3>👑 Administrator 2: Marek Żak</h3>
+      <h3>Administrator 2: Marek Żak</h3>
       <div class="grid2">
         <label>PIN (min. 6 cyfr)<input type="password" id="setup-pin-m" inputmode="numeric" autocomplete="new-password" placeholder="••••••"></label>
         <label>Powtórz PIN<input type="password" id="setup-pin-m2" inputmode="numeric" autocomplete="new-password" placeholder="••••••"></label>
@@ -49,8 +49,6 @@
 <!-- ===== EKRAN: LOGOWANIE ===== -->
 <section id="view-lock" class="view" hidden>
   <div class="lock-card">
-    <div class="logo"><img class="brand-mark" src="icons/offhand-logo.svg" alt="Offhand"><span>Sign<b>Off</b></span></div>
-    <div class="brand-by under">by OFFHAND</div>
     <h1 id="lock-title">Zaloguj się</h1>
     <p class="muted">Wybierz konto i podaj PIN.</p>
     <div id="account-buttons" class="op-buttons"></div>
@@ -58,6 +56,10 @@
     <p id="lock-error" class="error" hidden></p>
     <button class="btn primary big" id="btn-unlock">Zaloguj</button>
     <p class="tiny muted">Tryb offline ✓ · AES-256-GCM ✓ · Blokada po 5 błędnych próbach ✓ · Kopia w chmurze E2E ✓</p>
+    <div class="lock-logo">
+      <img class="brand-mark-lg" src="icons/offhand-logo.svg" alt="Offhand">
+      <span class="logo-word">Sign<b>Off</b></span>
+    </div>
     <p class="credit">przygotował Marek Żak · dla Offhand Hanna Nobis</p>
   </div>
 </section>
@@ -65,14 +67,14 @@
 <!-- ===== EKRAN: GŁÓWNY ===== -->
 <section id="view-home" class="view" hidden>
   <header class="topbar">
-    <div class="brand-top"><div class="logo small"><img class="brand-mark" src="icons/offhand-logo.svg" alt="Offhand"><span>Sign<b>Off</b></span></div><span class="brand-by inline">by OFFHAND</span></div>
     <div class="topbar-right">
-      <span id="user-badge" class="badge planned" data-help="Zalogowany użytkownik. 👑 = administrator (pełne uprawnienia), 👤 = pracownik (tylko zbieranie zgód)."></span>
+      <span id="user-badge" class="badge planned" data-help="Zalogowany użytkownik i jego rola. Administrator ma pełne uprawnienia; pracownik i „inne” mogą wyłącznie zbierać zgody."></span>
       <span id="sync-badge" class="badge offline" data-help="Stan kopii w chmurze. Godzina = ostatnia udana synchronizacja; „oczekuje” = wyśle przy najbliższym połączeniu.">☁ —</span>
       <span id="net-status" class="badge offline" data-help="Stan połączenia z internetem. Aplikacja działa w pełni offline — zgody zbiera się bez sieci.">offline</span>
       <button class="btn ghost" id="btn-settings" data-help="Ustawienia: projekty, dokumenty, konta, chmura (administrator) oraz zmiana własnego PIN.">⚙</button>
       <button class="btn ghost" id="btn-lock" data-help="Wylogowanie i zaszyfrowanie danych. Następna osoba musi podać swój PIN.">🔒 Wyloguj</button>
     </div>
+    <div class="brand-top right"><div class="logo small"><img class="brand-mark" src="icons/offhand-logo.svg" alt="Offhand"><span>Sign<b>Off</b></span></div><span class="brand-by inline">by OFFHAND</span></div>
   </header>
   <main class="container">
     <div class="home-head">
@@ -247,13 +249,13 @@
       <hr>
 
       <h3>Konta użytkowników</h3>
-      <p class="tiny muted">👑 Administrator może wszystko. 👤 Pracownik może wyłącznie zbierać zgody w przydzielonych projektach i zmienić własny PIN. Reset PIN-u nie wymaga znajomości starego — klucz danych jest niezależny od PIN-ów.</p>
+      <p class="tiny muted">Administrator może wszystko. Pracownik oraz „Inne” mogą wyłącznie zbierać zgody w przydzielonych projektach i zmienić własny PIN. Reset PIN-u nie wymaga znajomości starego — klucz danych jest niezależny od PIN-ów.</p>
       <div id="accounts-list"></div>
       <div class="add-box">
         <div class="grid2">
           <label>Imię i nazwisko<input type="text" id="new-acc-name" placeholder="np. Jan Pracownik"></label>
           <label>Rola
-            <select id="new-acc-role"><option value="employee">👤 Pracownik</option><option value="admin">👑 Administrator</option></select>
+            <select id="new-acc-role"><option value="employee">Pracownik</option><option value="inne">Inne</option><option value="admin">Administrator</option></select>
           </label>
           <label>PIN (min. 6 cyfr)<input type="password" id="new-acc-pin" inputmode="numeric" autocomplete="off"></label>
           <label>Powtórz PIN<input type="password" id="new-acc-pin2" inputmode="numeric" autocomplete="off"></label>
@@ -306,7 +308,7 @@
       <ul class="sec-list">
         <li>🔐 Losowy klucz główny danych (AES-256); PIN każdego konta tylko „opakowuje” klucz (PBKDF2, 310 000 iteracji) — dzięki temu reset PIN-u nie wymaga przeszyfrowania bazy</li>
         <li>⛔ Narastająca blokada konta po 5 błędnych próbach PIN</li>
-        <li>🔗 Łańcuch integralności SHA-256 (tamper-evident) · 👤 autor każdej zgody odnotowany</li>
+        <li>🔗 Łańcuch integralności SHA-256 (tamper-evident) · autor każdej zgody odnotowany</li>
         <li>☁ Kopia w chmurze szyfrowana end-to-end — serwer przechowuje wyłącznie bloby</li>
         <li>⏱ Auto-wylogowanie po 5 min · 💾 trwała pamięć urządzenia (Storage API)</li>
         <li>🧾 Kwalifikowany znacznik czasu (eIDAS): <span class="badge planned">do integracji z API TSP</span></li>

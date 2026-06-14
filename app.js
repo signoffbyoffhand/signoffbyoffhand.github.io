@@ -100,6 +100,7 @@ const views = ["view-setup", "view-lock", "view-home", "view-wizard", "view-deta
 function show(view) { views.forEach(v => $(v).hidden = v !== view); window.scrollTo(0, 0); }
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const isAdmin = () => S.user && S.user.role === "admin";
+const roleLabel = (r) => r === "admin" ? "administrator" : r === "inne" ? "inne" : "pracownik";
 function activeProject() { return allowedProjects().find(p => p.id === S.vault.activeProjectId) || allowedProjects()[0]; }
 function allowedProjects() {
   if (isAdmin()) return S.vault.projects;
@@ -298,7 +299,7 @@ function enterLogin() {
   for (const acc of S.config.accounts.filter(a => a.active)) {
     const b = document.createElement("button");
     b.className = "btn op-btn";
-    b.textContent = (acc.role === "admin" ? "👑 " : "👤 ") + acc.name;
+    b.innerHTML = `${esc(acc.name)} <span class="op-role">${roleLabel(acc.role)}</span>`;
     b.addEventListener("click", () => {
       accSelected = acc;
       [...box.children].forEach(x => x.classList.remove("primary"));
@@ -364,7 +365,7 @@ async function loadRecords() {
 function applyRole() {
   document.querySelectorAll(".admin-only").forEach(el => { el.style.display = isAdmin() ? "" : "none"; });
   const ub = $("user-badge");
-  ub.textContent = (isAdmin() ? "👑 " : "👤 ") + S.user.name;
+  ub.textContent = S.user.name + " · " + roleLabel(S.user.role);
 }
 
 /* ===================== Ekran główny ===================== */
@@ -769,8 +770,15 @@ function resetCamera() {
 function stopCameraStream() {
   if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
 }
-$("btn-cam-start").addEventListener("click", async () => {
-  const err = $("err-4"); err.hidden = true;
+function detectOS() {
+  const ua = navigator.userAgent || "";
+  if (/iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  return "other";
+}
+async function startCamera() {
+  $("err-4").hidden = true;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showCameraHelp("Unsupported"); return; }
   try {
     camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 } }, audio: false });
     const v = $("cam-video");
@@ -778,10 +786,58 @@ $("btn-cam-start").addEventListener("click", async () => {
     $("cam-placeholder").hidden = true; $("cam-photo").hidden = true;
     $("btn-cam-start").hidden = true; $("btn-cam-shot").hidden = false; $("btn-cam-retake").hidden = true;
   } catch (e) {
-    err.textContent = "Nie można uruchomić kamery (" + e.name + "). Możesz pominąć ten krok — zdjęcie jest zalecane, ale nieobowiązkowe.";
-    err.hidden = false;
+    showCameraHelp(e && e.name ? e.name : "Error");
   }
-});
+}
+$("btn-cam-start").addEventListener("click", startCamera);
+function showCameraHelp(errName) {
+  document.getElementById("cam-help") && document.getElementById("cam-help").remove();
+  const os = detectOS();
+  const noCam = errName === "NotFoundError" || errName === "DevicesNotFoundError" || errName === "OverconstrainedError";
+  const unsupported = errName === "Unsupported" || errName === "NotSupportedError";
+  let title, steps;
+  if (unsupported) {
+    title = "Aparat niedostępny w tym oknie";
+    steps = `<li>Otwórz aplikację z <b>ikony na ekranie głównym</b> telefonu (nie z linku w wiadomości czy mailu).</li><li>Sprawdź, czy adres zaczyna się od <b>https://</b>.</li><li>Dotknij <b>Spróbuj ponownie</b>.</li>`;
+  } else if (noCam) {
+    title = "Nie znaleziono aparatu";
+    steps = `<li>Aparat może być zajęty przez inną aplikację — zamknij np. Aparat, Zoom, Instagram.</li><li>Dotknij <b>Spróbuj ponownie</b>.</li><li>Jeśli to urządzenie nie ma aparatu, a zdjęcie nie jest wymagane — możesz je pominąć.</li>`;
+  } else if (os === "ios") {
+    title = "Pozwól na aparat (iPhone / iPad)";
+    steps = `<li>Wyjdź na ekran główny i otwórz <b>Ustawienia</b> (szara ikona z kółkami zębatymi).</li>
+      <li>Przewiń w dół do pozycji <b>SignOff</b> i dotknij jej.</li>
+      <li>Dotknij <b>Aparat</b> — przełącznik ma zrobić się <b>zielony</b>.</li>
+      <li>Wróć do SignOff i dotknij <b>Spróbuj ponownie</b>.</li>
+      <li class="muted">Jeśli używasz w Safari bez instalacji: Ustawienia → Safari → Aparat → Zezwól.</li>`;
+  } else if (os === "android") {
+    title = "Pozwól na aparat (Android)";
+    steps = `<li><b>Przytrzymaj palcem</b> ikonę SignOff na ekranie → dotknij <b>ⓘ Informacje o aplikacji</b>.</li>
+      <li>Dotknij <b>Uprawnienia</b>, a potem <b>Aparat</b>.</li>
+      <li>Wybierz <b>Zezwalaj</b>.</li>
+      <li>Wróć do SignOff i dotknij <b>Spróbuj ponownie</b>.</li>
+      <li class="muted">Możesz też dotknąć ikony <b>🔒 kłódki</b> obok adresu → Uprawnienia → Aparat → Zezwól.</li>`;
+  } else {
+    title = "Pozwól na aparat";
+    steps = `<li>Kliknij ikonę <b>kłódki</b> lub <b>aparatu</b> w pasku adresu przeglądarki.</li>
+      <li>Ustaw dostęp do <b>aparatu</b> na <b>Zezwól</b>.</li>
+      <li>Kliknij <b>Spróbuj ponownie</b>.</li>`;
+  }
+  const ov = document.createElement("div");
+  ov.id = "cam-help"; ov.className = "cam-help";
+  ov.innerHTML = `<div class="cam-help-card">
+    <div class="cam-help-icon">📷</div>
+    <h3>${title}</h3>
+    <p class="muted tiny">Ze względów bezpieczeństwa telefon nie pozwala aplikacji samej włączyć aparatu — trzeba zezwolić raz, ręcznie. Potem telefon zapamięta zgodę.</p>
+    <ol class="cam-steps">${steps}</ol>
+    <div class="cam-help-actions">
+      <button class="btn primary big" id="cam-retry">Spróbuj ponownie</button>
+      <button class="btn big" id="cam-close">Zamknij</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  $("cam-close").addEventListener("click", () => ov.remove());
+  $("cam-retry").addEventListener("click", () => { ov.remove(); startCamera(); });
+}
 $("btn-cam-shot").addEventListener("click", () => {
   const v = $("cam-video"), c = $("cam-canvas");
   c.width = v.videoWidth; c.height = v.videoHeight;
@@ -792,7 +848,7 @@ $("btn-cam-shot").addEventListener("click", () => {
   const img = $("cam-photo"); img.src = S.wizard.photo; img.hidden = false;
   $("btn-cam-shot").hidden = true; $("btn-cam-retake").hidden = false;
 });
-$("btn-cam-retake").addEventListener("click", () => { resetCamera(); $("btn-cam-start").click(); });
+$("btn-cam-retake").addEventListener("click", () => { resetCamera(); startCamera(); });
 
 /* --- krok 5: podsumowanie --- */
 function renderSummary() {
@@ -1060,7 +1116,7 @@ function renderProjects() {
     for (const acc of employees) {
       const lbl = document.createElement("label");
       lbl.className = "check tiny-check";
-      lbl.innerHTML = `<input type="checkbox" ${p.allowedUserIds.includes(acc.id) ? "checked" : ""}><span>${acc.role === "admin" ? "👑" : "👤"} ${esc(acc.name)}</span>`;
+      lbl.innerHTML = `<input type="checkbox" ${p.allowedUserIds.includes(acc.id) ? "checked" : ""}><span>${esc(acc.name)} <span class="tiny muted">(${roleLabel(acc.role)})</span></span>`;
       lbl.querySelector("input").addEventListener("change", async (e) => {
         if (e.target.checked) { if (!p.allowedUserIds.includes(acc.id)) p.allowedUserIds.push(acc.id); }
         else p.allowedUserIds = p.allowedUserIds.filter(x => x !== acc.id);
@@ -1127,8 +1183,8 @@ function renderAccounts() {
     const row = document.createElement("div");
     row.className = "attach-row";
     row.innerHTML = `
-      <div class="attach-info">${acc.role === "admin" ? "👑" : "👤"} <b>${esc(acc.name)}</b>
-        <span class="tiny muted">${acc.role === "admin" ? "administrator" : "pracownik"}${acc.active ? "" : " · DEZAKTYWOWANE"}${acc.id === S.user.id ? " · (to Ty)" : ""}</span></div>
+      <div class="attach-info"><b>${esc(acc.name)}</b>
+        <span class="tiny muted">${roleLabel(acc.role)}${acc.active ? "" : " · DEZAKTYWOWANE"}${acc.id === S.user.id ? " · (to Ty)" : ""}</span></div>
       <button class="btn" data-act="reset">🔑 Reset PIN</button>
       ${acc.id !== S.user.id ? `<button class="btn" data-act="toggle">${acc.active ? "⏸ Dezaktywuj" : "▶ Aktywuj"}</button><button class="btn danger" data-act="del">🗑</button>` : ""}
       <div class="reset-box" hidden>
