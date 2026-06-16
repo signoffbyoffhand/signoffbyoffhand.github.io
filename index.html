@@ -261,8 +261,25 @@
       </div>
       <hr>
 
-      <h3>☁ Chmura / serwer kopii</h3>
-      <p class="tiny muted">Kopia całej bazy (zaszyfrowanej E2E — serwer nie widzi danych) wysyłana automatycznie po każdej zmianie. Klucz synchronizacji wyświetla konsola serwera przy starcie.</p>
+      <h3>☁ Kopia w chmurze (Firebase / Firestore)</h3>
+      <p class="tiny muted">Trwała, zaszyfrowana kopia w UE (Warszawa). Dane są szyfrowane na urządzeniu — Google nie widzi ich treści. Wpisz <b>hasło konta technicznego</b> (od Marka) i włącz — reszta jest już ustawiona.</p>
+      <label class="check"><input type="checkbox" id="fb-enabled"><span>Włącz kopię w chmurze (Firebase)</span></label>
+      <label>Hasło konta technicznego<input type="password" id="fb-password" autocomplete="off" placeholder="••••••••••••"></label>
+      <label class="check"><input type="checkbox" id="fb-auto" checked><span>Synchronizuj automatycznie po każdej zmianie</span></label>
+      <details class="adv"><summary class="tiny muted">Dane projektu Firebase (zwykle nie ruszać)</summary>
+        <div class="grid2"><label>e-mail konta technicznego<input type="email" id="fb-email" autocomplete="off"></label><label>apiKey<input type="text" id="fb-apikey"></label></div>
+        <label>projectId<input type="text" id="fb-projectid"></label>
+      </details>
+      <div class="wnav-mini">
+        <button class="btn primary" id="btn-fb-save" data-help="Zapisuje hasło, loguje się do Firebase i wysyła testową kopię, by sprawdzić połączenie.">💾 Zapisz i testuj</button>
+        <button class="btn" id="btn-fb-restore" data-help="Pobiera listę kopii z chmury (także z innych urządzeń) i pozwala przywrócić wybraną. Zastępuje dane na tym urządzeniu.">⬇ Przywróć z chmury</button>
+      </div>
+      <p id="fb-status" class="tiny muted"></p>
+      <div id="fb-restore-list"></div>
+      <hr>
+
+      <details class="adv"><summary><b>☁ Własny serwer kopii (alternatywa — zwykle niepotrzebne)</b></summary>
+      <p class="tiny muted">Zamiast Firebase można użyć własnego serwera (server.js). Klucz synchronizacji wyświetla konsola serwera przy starcie.</p>
       <label>Adres serwera<input type="text" id="sync-url" placeholder="np. https://twoj-serwer.pl lub http://localhost:4290"></label>
       <label>Klucz synchronizacji<input type="password" id="sync-key" autocomplete="off"></label>
       <label class="check"><input type="checkbox" id="sync-auto" checked><span>Synchronizuj automatycznie po każdej zmianie</span></label>
@@ -274,6 +291,7 @@
       </div>
       <p id="sync-status" class="tiny muted"></p>
       <div id="restore-list"></div>
+      </details>
       <hr>
 
       <h3>✉ Wysyłka e-mail do podpisujących</h3>

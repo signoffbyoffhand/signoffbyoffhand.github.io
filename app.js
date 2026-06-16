@@ -522,32 +522,135 @@ function buildSmtp() {
   if (!host) return null;
   return { host, port: Number(port) || 465, user: m.email, pass: m.pass, from: (m.from ? `${m.from} <${m.email}>` : m.email) };
 }
+/* ===================== Firebase Firestore (chmura, REST — bez SDK) =====================
+   Zaszyfrowana kopia (E2E) trzymana w Firestore. Duży backup dzielony na fragmenty
+   (limit 1 MB/dokument): metadane w kolekcji „signoff", fragmenty w „signoff_chunks". */
+function fbCfg() { const f = S.vault && S.vault.fb; return (f && f.enabled && f.apiKey && f.projectId && f.email && f.password) ? f : null; }
+let fbToken = null, fbTokenAt = 0;
+async function fbSignIn() {
+  const c = fbCfg(); if (!c) throw new Error("Brak konfiguracji Firebase.");
+  if (fbToken && Date.now() - fbTokenAt < 50 * 60 * 1000) return fbToken;
+  const resp = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(c.apiKey)}`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: c.email, password: c.password, returnSecureToken: true }),
+  });
+  const out = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error((out.error && out.error.message) || "logowanie Firebase nieudane");
+  fbToken = out.idToken; fbTokenAt = Date.now();
+  return fbToken;
+}
+function fbDocUrl(c, path) { return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(c.projectId)}/databases/(default)/documents/${path}`; }
+const FB_CHUNK = 700000;
+async function fbUpload(rec) {
+  const c = fbCfg(), token = await fbSignIn();
+  const H = { Authorization: "Bearer " + token, "Content-Type": "application/json" };
+  const json = JSON.stringify(rec.payload);
+  const parts = []; for (let i = 0; i < json.length; i += FB_CHUNK) parts.push(json.slice(i, i + FB_CHUNK));
+  for (let i = 0; i < parts.length; i++) {
+    const r = await fetch(fbDocUrl(c, `signoff_chunks/${rec.deviceId}_${i}`), { method: "PATCH", headers: H, body: JSON.stringify({ fields: { data: { stringValue: parts[i] } } }) });
+    if (!r.ok) { const o = await r.json().catch(() => ({})); throw new Error((o.error && o.error.message) || ("zapis fragmentu " + r.status)); }
+  }
+  const m = await fetch(fbDocUrl(c, `signoff/${rec.deviceId}`), { method: "PATCH", headers: H, body: JSON.stringify({ fields: { deviceName: { stringValue: rec.deviceName || "" }, updatedAt: { stringValue: rec.updatedAt }, chunks: { integerValue: String(parts.length) } } }) });
+  if (!m.ok) { const o = await m.json().catch(() => ({})); throw new Error((o.error && o.error.message) || ("zapis metadanych " + m.status)); }
+  for (let i = parts.length; i < parts.length + 10; i++) fetch(fbDocUrl(c, `signoff_chunks/${rec.deviceId}_${i}`), { method: "DELETE", headers: H }).catch(() => {});
+  return true;
+}
+async function fbDownload(deviceId) {
+  const c = fbCfg(), token = await fbSignIn();
+  const H = { Authorization: "Bearer " + token };
+  const meta = await (await fetch(fbDocUrl(c, `signoff/${deviceId}`), { headers: H })).json();
+  const n = meta.fields && meta.fields.chunks ? Number(meta.fields.chunks.integerValue) : 0;
+  let json = "";
+  for (let i = 0; i < n; i++) {
+    const r = await fetch(fbDocUrl(c, `signoff_chunks/${deviceId}_${i}`), { headers: H });
+    const o = await r.json(); if (!r.ok) throw new Error("pobranie fragmentu " + i);
+    json += o.fields.data.stringValue;
+  }
+  return { deviceId, payload: JSON.parse(json) };
+}
+async function fbListDevices() {
+  const c = fbCfg(), token = await fbSignIn();
+  const resp = await fetch(fbDocUrl(c, `signoff`), { headers: { Authorization: "Bearer " + token } });
+  const out = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error((out.error && out.error.message) || ("lista " + resp.status));
+  return (out.documents || []).map(d => {
+    const id = (d.name || "").split("/").pop();
+    const f = d.fields || {};
+    return { deviceId: id, deviceName: (f.deviceName && f.deviceName.stringValue) || id, updatedAt: f.updatedAt && f.updatedAt.stringValue };
+  });
+}
+
+function cloudEnabled() { return !!fbCfg() || !!(syncCfg().url && syncCfg().key); }
+
+/* dane projektu Firebase signoff-offhand (apiKey/projectId są jawne; hasło wpisuje administrator) */
+const FB_DEFAULTS = { apiKey: "AIzaSyCRx_G6RBTxazAismxKuu2WkYNvsJ8FJJU", projectId: "signoff-offhand", email: "signoff-sync@offhand.app" };
+$("btn-fb-save").addEventListener("click", async () => {
+  const st = $("fb-status");
+  const enabled = $("fb-enabled").checked, password = $("fb-password").value;
+  if (enabled && !password) { st.textContent = "🛑 Wpisz hasło konta technicznego."; return; }
+  S.vault.fb = {
+    enabled, password,
+    apiKey: $("fb-apikey").value.trim() || FB_DEFAULTS.apiKey,
+    projectId: $("fb-projectid").value.trim() || FB_DEFAULTS.projectId,
+    email: $("fb-email").value.trim() || FB_DEFAULTS.email,
+    auto: $("fb-auto").checked,
+  };
+  fbToken = null;
+  await saveVault();
+  if (!enabled) { st.textContent = "Kopia w chmurze wyłączona."; updateSyncBadge(); return; }
+  st.textContent = "Łączę z Firebase i wysyłam testową kopię…";
+  const ok = await syncPush(true);
+  if (ok) { st.textContent = "✅ Połączono. Kopia w chmurze (Firebase) działa."; updateSyncBadge(); }
+  else { st.textContent = ($("sync-status").textContent || "").replace("synchronizacji", "połączenia z Firebase") || "🛑 Nie udało się — sprawdź hasło."; }
+});
+$("btn-fb-restore").addEventListener("click", async () => {
+  const box = $("fb-restore-list");
+  if (!fbCfg()) { box.innerHTML = '<p class="error">Najpierw włącz Firebase i zapisz (z hasłem).</p>'; return; }
+  box.innerHTML = "Pobieram listę kopii z chmury…";
+  try {
+    const devices = await fbListDevices();
+    if (!devices.length) { box.innerHTML = '<p class="tiny muted">Brak kopii w chmurze.</p>'; return; }
+    box.innerHTML = "";
+    for (const d of devices) {
+      const row = document.createElement("div");
+      row.className = "attach-row";
+      row.innerHTML = `<div class="attach-info">💾 <b>${esc(d.deviceName)}</b> <span class="tiny muted">${d.updatedAt ? new Date(d.updatedAt).toLocaleString("pl-PL") : ""}${d.deviceId === S.config.deviceId ? " · (to urządzenie)" : ""}</span></div><button class="btn">⬇ Przywróć</button>`;
+      row.querySelector("button").addEventListener("click", async () => {
+        if (!confirm(`Przywrócić kopię „${d.deviceName}”?\n\nZastąpi WSZYSTKIE dane na tym urządzeniu.`)) return;
+        try { const data = await fbDownload(d.deviceId); await applyBackup(data.payload); alert("Kopia przywrócona. Zaloguj się ponownie."); location.reload(); }
+        catch (e) { alert("Błąd przywracania: " + e.message); }
+      });
+      box.appendChild(row);
+    }
+  } catch (e) { box.innerHTML = `<p class="error">Błąd: ${esc(e.message)}</p>`; }
+});
+
 function updateSyncBadge(msg) {
   const b = $("sync-badge");
-  const c = syncCfg();
   if (msg) { b.textContent = "☁ " + msg; return; }
-  if (!c.url) { b.textContent = "☁ wyłączona"; b.className = "badge planned"; return; }
+  if (!cloudEnabled()) { b.textContent = "☁ wyłączona"; b.className = "badge planned"; return; }
   if (S.config.lastSync) { b.textContent = "☁ " + new Date(S.config.lastSync).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" }); b.className = "badge online"; }
   else { b.textContent = "☁ oczekuje"; b.className = "badge offline"; }
 }
 async function syncPush(manual) {
-  const c = syncCfg();
-  if (!c.url || !c.key) { if (manual) alert("Skonfiguruj adres serwera i klucz synchronizacji."); return false; }
+  const fb = fbCfg(), c = syncCfg();
+  if (!fb && (!c.url || !c.key)) { if (manual) alert("Skonfiguruj chmurę (Firebase) w ustawieniach."); return false; }
   if (!navigator.onLine) { updateSyncBadge("offline — wyśle po połączeniu"); return false; }
   try {
     updateSyncBadge("wysyłanie…");
     const payload = await buildBackup();
-    const resp = await fetch(c.url.replace(/\/+$/, "") + "/api/sync", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Sync-Key": c.key },
-      body: JSON.stringify({ deviceId: S.config.deviceId, deviceName: S.config.deviceName, payload }),
-    });
-    const out = await resp.json();
-    if (!resp.ok) throw new Error(out.error || resp.status);
-    S.config.lastSync = out.updatedAt;
+    const rec = { deviceId: S.config.deviceId, deviceName: S.config.deviceName, updatedAt: new Date().toISOString(), payload };
+    if (fb) {
+      await fbUpload(rec);
+      S.config.lastSync = rec.updatedAt;
+    } else {
+      const resp = await fetch(c.url.replace(/\/+$/, "") + "/api/sync", { method: "POST", headers: { "Content-Type": "application/json", "X-Sync-Key": c.key }, body: JSON.stringify(rec) });
+      const out = await resp.json(); if (!resp.ok) throw new Error(out.error || resp.status);
+      S.config.lastSync = out.updatedAt;
+    }
     await saveConfig();
     updateSyncBadge();
-    if (manual) $("sync-status").textContent = "✅ Zsynchronizowano: " + new Date(out.updatedAt).toLocaleString("pl-PL");
+    if (manual) $("sync-status").textContent = `✅ Zsynchronizowano${fb ? " (Firebase)" : ""}: ` + new Date(S.config.lastSync).toLocaleString("pl-PL");
     return true;
   } catch (e) {
     updateSyncBadge("błąd");
@@ -557,6 +660,7 @@ async function syncPush(manual) {
 }
 function scheduleSync() {
   const c = syncCfg();
+  if (fbCfg() && (S.vault.fb.auto !== false) && S.key) { clearTimeout(S.syncTimer); S.syncTimer = setTimeout(() => syncPush(false), 2500); return; }
   if (!c.url || !c.auto || !S.key) return;
   clearTimeout(S.syncTimer);
   S.syncTimer = setTimeout(() => syncPush(false), 2500);
@@ -1102,6 +1206,15 @@ function enterSettings() {
     $("sync-autoemail").checked = !!c.autoEmail;
     $("sync-status").textContent = S.config.lastSync ? "Ostatnia synchronizacja: " + new Date(S.config.lastSync).toLocaleString("pl-PL") : "Jeszcze nie synchronizowano.";
     $("restore-list").innerHTML = "";
+    const fb = S.vault.fb || {};
+    $("fb-enabled").checked = !!fb.enabled;
+    $("fb-password").value = fb.password || "";
+    $("fb-auto").checked = fb.auto !== false;
+    $("fb-email").value = fb.email || FB_DEFAULTS.email;
+    $("fb-apikey").value = fb.apiKey || FB_DEFAULTS.apiKey;
+    $("fb-projectid").value = fb.projectId || FB_DEFAULTS.projectId;
+    $("fb-status").textContent = "";
+    $("fb-restore-list").innerHTML = "";
     const m = mailCfg() || {};
     $("mail-email").value = m.email || ""; $("mail-pass").value = m.pass || "";
     $("mail-from").value = m.from || ""; $("mail-host").value = m.host || ""; $("mail-port").value = m.port || "";
