@@ -6,6 +6,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; style-src 'self'; script-src 'self'; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; object-src 'self' blob:; frame-src 'self' blob:; base-uri 'none'">
 <title>SignOff by Offhand — zgody i dokumenty do podpisu</title>
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
 <link rel="stylesheet" href="style.css">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -18,6 +19,10 @@
 <!-- ===== EKRAN: LOGOWANIE / PIERWSZE URUCHOMIENIE ===== -->
 <section id="view-lock" class="view" hidden>
   <div class="lock-card">
+    <div class="clap" aria-hidden="true">
+      <div class="clap-body"><span class="clap-meta">OFFHAND<br>SC 01 · T1</span></div>
+      <div class="clap-top"><span class="clap-stripes"></span></div>
+    </div>
     <div class="wordmark"><span class="nm">Sign<b>Off</b></span><span class="by">by OFFHAND</span></div>
     <h1 id="lock-title">Zaloguj się</h1>
 
@@ -43,7 +48,7 @@
     </div>
 
     <p class="tiny muted">Tryb offline ✓ · AES-256-GCM ✓ · Blokada po 5 błędnych próbach ✓ · Kopia w chmurze E2E ✓</p>
-    <div class="lock-mark"><img src="icons/offhand-logo.svg" alt="Offhand"></div>
+    <div class="lock-mark"><img src="icons/offhand-mark-cream.png" alt="Offhand"></div>
     <p class="credit">przygotował Marek Żak · dla Offhand Hanna Nobis</p>
     <p class="tiny"><a href="#" id="link-rodo" class="rodo-link">Regulamin i klauzula informacyjna (RODO) dla użytkowników</a></p>
   </div>
@@ -61,13 +66,12 @@
 <!-- ===== EKRAN: GŁÓWNY ===== -->
 <section id="view-home" class="view" hidden>
   <header class="topbar">
-    <div class="wordmark sm"><span class="nm">Sign<b>Off</b></span><span class="by">by OFFHAND</span></div>
+    <div class="topbar-brand"><img class="brand-mark-lead" src="icons/offhand-mark-cream.png" alt=""><div class="wordmark sm"><span class="nm">Sign<b>Off</b></span><span class="by">by OFFHAND</span></div></div>
     <div class="topbar-right">
       <span id="user-badge" class="badge planned" data-help="Zalogowany użytkownik i jego rola. Administrator ma pełne uprawnienia; pracownik i „inne” mogą wyłącznie zbierać zgody."></span>
       <span id="sync-badge" class="badge offline" data-help="Stan kopii w chmurze. Godzina = ostatnia udana synchronizacja; „oczekuje” = wyśle przy najbliższym połączeniu.">☁ —</span>
       <span id="net-status" class="badge offline" data-help="Stan połączenia z internetem. Aplikacja działa w pełni offline — zgody zbiera się bez sieci.">offline</span>
       <button class="btn ghost" id="btn-settings" data-help="Ustawienia: projekty, dokumenty, konta, chmura (administrator) oraz zmiana własnego PIN.">⚙</button>
-      <img class="brand-mark-corner" src="icons/offhand-logo.svg" alt="Offhand">
       <button class="btn logout" id="btn-lock" data-help="Wylogowanie i zaszyfrowanie danych. Następna osoba musi podać swój PIN.">Wyloguj</button>
     </div>
   </header>
@@ -96,7 +100,10 @@
 <section id="view-wizard" class="view" hidden>
   <header class="topbar">
     <button class="btn ghost" id="btn-wizard-cancel">✕ Anuluj</button>
-    <div class="steps" id="wizard-steps"></div>
+    <div class="wizard-progress">
+      <div class="steps" id="wizard-steps"></div>
+      <span class="step-count" id="wizard-step-count" aria-hidden="true"></span>
+    </div>
   </header>
   <main class="container narrow">
 

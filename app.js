@@ -1700,3 +1700,22 @@ $("link-rodo").addEventListener("click", (e) => { e.preventDefault(); $("rodo-do
 $("btn-rodo-close").addEventListener("click", () => { $("rodo-modal").hidden = true; });
 
 boot();
+
+/* ===== Dekoracja: licznik kroków kreatora "n/5" + procent paska postępu =====
+   Czysto wizualne, addytywne. Obserwuje #wizard-steps (renderowany w gotoStep)
+   i aktualizuje licznik oraz zmienną CSS --wizard-pct dla ciągłego paska. */
+(function () {
+  const stepsEl = document.getElementById("wizard-steps");
+  const countEl = document.getElementById("wizard-step-count");
+  if (!stepsEl) return;
+  const sync = () => {
+    const dots = stepsEl.querySelectorAll(".step-dot");
+    const total = dots.length || 5;
+    let cur = 1;
+    dots.forEach((d, i) => { if (d.classList.contains("active")) cur = i + 1; });
+    if (countEl) countEl.textContent = cur + "/" + total;
+    stepsEl.style.setProperty("--wizard-pct", Math.round((cur / total) * 100) + "%");
+  };
+  new MutationObserver(sync).observe(stepsEl, { childList: true });
+  sync();
+})();
