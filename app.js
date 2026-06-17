@@ -290,7 +290,7 @@ function enterLogin() {
   $("firstrun").hidden = true;
   $("loginbox").hidden = false;
   accSelected = null;
-  $("lock-pin").value = "";
+  $("lock-pin").value = ""; if (typeof renderPinDots === "function") renderPinDots();
   $("lock-title").textContent = "Zaloguj się";
   const actives = S.config.accounts.filter(a => a.active);
   const area = $("account-area");
@@ -347,6 +347,15 @@ async function login() {
 }
 $("btn-unlock").addEventListener("click", login);
 $("lock-pin").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+/* PIN jako kropki (wizualnie wg wzorca) — pole pozostaje natywne, tekst ukryty,
+   kropki odzwierciedlają długość wpisanego PIN-u (min. 6 kółek). */
+function renderPinDots() {
+  const inp = $("lock-pin"), box = $("pin-dots"); if (!inp || !box) return;
+  const n = inp.value.length, total = Math.max(6, n);
+  let h = ""; for (let i = 0; i < total; i++) h += `<i class="${i < n ? "on" : ""}"></i>`;
+  box.innerHTML = h;
+}
+$("lock-pin").addEventListener("input", renderPinDots);
 
 async function loadRecords() {
   const rows = await getAll("records");
@@ -361,6 +370,11 @@ async function loadRecords() {
     catch { S.records.push({ id: row.id, corrupted: true, _chain: row.chain }); }
   }
   S.records.sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+  // mapa wysłanych kopii (do plakietki „WYSŁANO" na liście)
+  try {
+    const ob = await getAll("outbox");
+    S.sentIds = new Set(ob.filter(o => o.sentAt || /^wys[łl]ano|udost/i.test(o.status || "")).map(o => o.id));
+  } catch { S.sentIds = new Set(); }
 }
 
 /* ===================== Role w UI ===================== */
@@ -415,25 +429,92 @@ function renderList(filter) {
   const list = $("records-list");
   const f = (filter || "").toLowerCase();
   const items = projectRecords().filter(r => !f || (!r.corrupted && (`${r.person.first} ${r.person.last}`.toLowerCase().includes(f))));
-  if (!items.length) { list.innerHTML = `<div class="empty">Brak zgód${f ? " dla tego filtra" : " w tym projekcie"}. Dotknij „＋ Nowa zgoda”.</div>`; return; }
+  if (S.selectMode === undefined) S.selectMode = false;
+  if (!S.selected) S.selected = new Set();
+  const selectable = items.filter(r => !r.corrupted);
   list.innerHTML = "";
+
+  // nagłówek sekcji + przełącznik trybu zaznaczania (wg wzorca)
+  const head = document.createElement("div");
+  head.className = "list-head";
+  head.innerHTML = `<span class="list-head-title">OSTATNIE ZGODY</span>`;
+  if (selectable.length) {
+    const tg = document.createElement("button");
+    tg.className = "btn-selmode";
+    tg.textContent = S.selectMode ? "Gotowe" : "✓ Zaznacz";
+    tg.addEventListener("click", () => { S.selectMode = !S.selectMode; if (!S.selectMode) S.selected.clear(); renderList($("search").value); });
+    head.appendChild(tg);
+  }
+  list.appendChild(head);
+
+  // pasek akcji zbiorczych
+  if (S.selectMode && selectable.length) {
+    const allOn = S.selected.size === selectable.length;
+    const bar = document.createElement("div");
+    bar.className = "bulk-bar";
+    bar.innerHTML = `<div class="bulk-row">
+        <button class="bulk-all"><span class="rec-cb ${allOn ? "on" : ""}">${allOn ? "✓" : ""}</span>${allOn ? "Odznacz wszystkie" : "Zaznacz wszystkie"}</button>
+        <span class="bulk-count">${S.selected.size} zaznaczone</span>
+      </div>
+      <div class="bulk-actions">
+        <button class="btn bulk-send">↗ Wyślij</button>
+        <button class="btn bulk-dl">↓ Pobierz</button>
+      </div>`;
+    bar.querySelector(".bulk-all").addEventListener("click", () => {
+      if (allOn) S.selected.clear(); else selectable.forEach(r => S.selected.add(r.id));
+      renderList($("search").value);
+    });
+    bar.querySelector(".bulk-send").addEventListener("click", async () => {
+      const chosen = selectable.filter(r => S.selected.has(r.id));
+      if (!chosen.length) return alert("Najpierw zaznacz zgody.");
+      for (const r of chosen) { try { await sharePDF(r); } catch {} }
+    });
+    bar.querySelector(".bulk-dl").addEventListener("click", async () => {
+      const chosen = selectable.filter(r => S.selected.has(r.id));
+      if (!chosen.length) return alert("Najpierw zaznacz zgody.");
+      for (const r of chosen) { try { await downloadPDF(r); } catch {} await new Promise(res => setTimeout(res, 400)); }
+    });
+    list.appendChild(bar);
+  }
+
+  if (!items.length) {
+    const e = document.createElement("div"); e.className = "empty";
+    e.textContent = `Brak zgód${f ? " dla tego filtra" : " w tym projekcie"}. Dotknij „＋ Nowa zgoda”.`;
+    list.appendChild(e); return;
+  }
+
   for (const r of [...items].reverse()) {
     const div = document.createElement("div");
     div.className = "record";
     if (r.corrupted) {
-      div.innerHTML = `<div class="who"><b>⚠ Rekord nieodczytywalny</b><span>${esc(r.id)}</span></div><span class="badge revoked">błąd</span>`;
-    } else {
-      const d = new Date(r.createdAt).toLocaleString("pl-PL");
-      const marks = [
-        `<span class="badge ok">art. 81 ✓</span>`,
-        r.status === "active" ? `<span class="badge ok">RODO ✓</span>` : `<span class="badge revoked">RODO cofnięta</span>`,
-        r.person.isMinor ? `<span class="badge planned">małoletni</span>` : "",
-        (r.attachments || []).length ? `<span class="badge planned">📎 ${r.attachments.length}</span>` : "",
-        r.photo ? `<span class="badge planned">📷</span>` : "",
-      ].join("");
-      div.innerHTML = `<div class="who"><b>${esc(r.person.first)} ${esc(r.person.last)}</b><span>${esc(r.person.role || "—")} · ${d}${r.operator ? " · zebrał(a): " + esc(r.operator) : ""}</span></div><div class="marks">${marks}</div>`;
-      div.addEventListener("click", () => showDetail(r.id));
+      div.innerHTML = `<div class="rec-avatar err">⚠</div><div class="who"><b>⚠ Rekord nieodczytywalny</b><span>${esc(r.id)}</span></div><span class="badge revoked">błąd</span>`;
+      list.appendChild(div); continue;
     }
+    const d = new Date(r.createdAt).toLocaleString("pl-PL");
+    const revoked = r.status !== "active";
+    const sent = S.sentIds && S.sentIds.has(r.id);
+    const checked = S.selected.has(r.id);
+    const pills = [
+      `<span class="spill ok">✓ PODPISANO</span>`,
+      sent ? `<span class="spill sent">↗ WYSŁANO</span>` : "",
+      revoked ? `<span class="spill warn">RODO COFNIĘTA</span>` : "",
+      r.person.isMinor ? `<span class="spill mut">MAŁOLETNI</span>` : "",
+    ].join("");
+    const cb = S.selectMode ? `<div class="rec-cb ${checked ? "on" : ""}">${checked ? "✓" : ""}</div>` : "";
+    const avatar = `<div class="rec-avatar ${revoked ? "warn" : "ok"}">${revoked ? "↺" : "✓"}</div>`;
+    const actions = `<div class="rec-actions">
+      <button class="rec-act" data-act="send" aria-label="Wyślij kopię"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M22 3L11 14M22 3l-7 19-4-8-8-4 19-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+      <button class="rec-act" data-act="dl" aria-label="Pobierz PDF"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>`;
+    div.innerHTML = `${cb}${avatar}<div class="who"><b>${esc(r.person.first)} ${esc(r.person.last)}</b><span>${esc(r.person.role || "—")} · ${d}${r.operator ? " · zebrał(a): " + esc(r.operator) : ""}</span><div class="spills">${pills}</div></div>${actions}`;
+    div.querySelector("[data-act=send]").addEventListener("click", (e) => { e.stopPropagation(); sharePDF(r); });
+    div.querySelector("[data-act=dl]").addEventListener("click", (e) => { e.stopPropagation(); downloadPDF(r); });
+    div.addEventListener("click", () => {
+      if (S.selectMode) {
+        if (S.selected.has(r.id)) S.selected.delete(r.id); else S.selected.add(r.id);
+        renderList($("search").value);
+      } else showDetail(r.id);
+    });
     list.appendChild(div);
   }
 }
@@ -1746,26 +1827,6 @@ boot();
   sync();
 })();
 
-/* ===== Dekoracja: avatar statusu na kafelkach listy zgód =====
-   Czysto wizualna. Po renderze listy (#records-list) dodaje przed każdym
-   wierszem ikonę-awatar statusu (✓ podpisano / ⚠ błąd) zgodnie z wzorcem.
-   Nie zmienia treści, danych ani obsługi kliknięć wiersza. */
-(function () {
-  const listEl = document.getElementById("records-list");
-  if (!listEl) return;
-  const decorate = () => {
-    listEl.querySelectorAll(".record").forEach(row => {
-      if (row.querySelector(".rec-avatar")) return;
-      const av = document.createElement("div");
-      av.className = "rec-avatar";
-      const revoked = row.querySelector(".badge.revoked");
-      const corrupt = /nieodczytywaln/i.test(row.textContent || "");
-      if (corrupt) { av.classList.add("err"); av.textContent = "⚠"; }
-      else if (revoked) { av.classList.add("warn"); av.textContent = "↺"; }
-      else { av.classList.add("ok"); av.textContent = "✓"; }
-      row.insertBefore(av, row.firstChild);
-    });
-  };
-  new MutationObserver(decorate).observe(listEl, { childList: true });
-  decorate();
-})();
+/* Awatary statusu na liście zgód renderuje teraz bezpośrednio renderList
+   (wraz z plakietkami, ikonami akcji i trybem zaznaczania) — osobny
+   obserwator nie jest już potrzebny. */

@@ -44,7 +44,10 @@
       <div class="field-label lock-field-lbl">KONTO</div>
       <div id="account-area"></div>
       <div class="field-label lock-field-lbl">PIN</div>
-      <input type="password" id="lock-pin" inputmode="numeric" autocomplete="current-password" placeholder="PIN" class="pin-input">
+      <div class="pin-wrap">
+        <input type="password" id="lock-pin" inputmode="numeric" autocomplete="current-password" placeholder="PIN" class="pin-input">
+        <div class="pin-dots" id="pin-dots" aria-hidden="true"></div>
+      </div>
       <p id="lock-error" class="error" hidden></p>
       <button class="btn primary big" id="btn-unlock">Zaloguj</button>
       <p class="lock-reset">Nie pamiętasz PIN-u? <b>Poproś administratora o reset</b></p>
