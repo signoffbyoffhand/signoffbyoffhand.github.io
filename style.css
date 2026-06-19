@@ -603,6 +603,7 @@ details.adv summary b { color: var(--ink-2); }
 .pd-block select, .pd-block input { width: 100%; margin: 6px 0; }
 .pd-block .btn { width: 100%; margin-top: 8px; }
 .pd-or { text-align: center; color: var(--muted); font-size: .8rem; margin: 12px 0; font-family: var(--mono); letter-spacing: .1em; }
+.pd-note { margin-top: 14px; padding: 11px 13px; border-radius: 10px; background: rgba(217,131,36,.12); border-left: 4px solid #d98324; color: var(--ink-2); font-size: .8rem; line-height: 1.5; }
 
 /* plakietki statusu pod imieniem */
 .spills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }

@@ -1460,15 +1460,14 @@ function openProjectDelete(p) {
   ov.innerHTML = `<div class="cam-help-card rodo-modal-card" style="text-align:left">
     <h3>Usuń projekt „${esc(p.name)}”</h3>
     ${recs.length ? `
-      <p class="tiny" style="color:var(--ink-2)">Ten projekt ma <b>${recs.length}</b> ${recs.length === 1 ? "zgodę" : "zgód"}. Najpierw zdecyduj, co z nimi — żeby nic nie zginęło przez przypadek.</p>
+      <p class="tiny" style="color:var(--ink-2)">Ten projekt ma <b>${recs.length}</b> ${recs.length === 1 ? "zgodę" : "zgód"}. Projektu nie można usunąć, dopóki są w nim zgody.</p>
       <div class="pd-block">
-        <div class="field-label">Przenieś zgody do</div>
+        <div class="field-label">Przenieś zgody do innego projektu i usuń ten</div>
         <select id="pd-target">${opts}</select>
         <input id="pd-newname" type="text" placeholder="Nazwa nowego projektu roboczego" hidden>
         <button class="btn primary big" id="pd-move">Przenieś zgody i usuń projekt</button>
       </div>
-      <div class="pd-or">— albo —</div>
-      <button class="btn danger" id="pd-delall" style="width:100%">🗑 Usuń projekt razem ze zgodami (${recs.length})</button>
+      <div class="pd-note">🛈 Chcesz też usunąć te zgody? Najpierw usuń je na liście („✓ Zaznacz” → 🗑 Usuń), a potem wróć tu i usuń już pusty projekt. To celowe zabezpieczenie przed przypadkowym usunięciem wszystkich zgód.</div>
     ` : `
       <p class="tiny" style="color:var(--ink-2)">Projekt nie ma żadnych zgód.</p>
       <button class="btn danger" id="pd-delempty" style="width:100%">🗑 Usuń projekt</button>
@@ -1504,16 +1503,6 @@ function openProjectDelete(p) {
     await loadRecords();
     close(); scheduleSync(); enterSettings();
     alert(`Przeniesiono ${recs.length} ${recs.length === 1 ? "zgodę" : "zgód"} do „${targetName}” i usunięto projekt.`);
-  });
-  const delAll = ov.querySelector("#pd-delall");
-  if (delAll) delAll.addEventListener("click", async () => {
-    if (!confirm(`Na pewno usunąć projekt „${p.name}” RAZEM z ${recs.length} ${recs.length === 1 ? "zgodą" : "zgód"}?` + (cloud ? "\n\nKopia w chmurze pozwoli to odtworzyć." : "\n\n⚠ NIEODWRACALNE — chmura wyłączona."))) return;
-    if (cloud) { const ok = await snapshotNow(); if (!ok && !confirm("Nie udało się zapisać kopii w chmurze. Usunąć mimo to — NIEODWRACALNIE?")) return; }
-    for (const r of recs) { await tx("records", "readwrite", s => s.delete(r.id)); try { await tx("outbox", "readwrite", s => s.delete(r.id)); } catch {} }
-    S.records = S.records.filter(x => x.projectId !== p.id);
-    await removeProject();
-    await rebuildChain();
-    close(); scheduleSync(); enterSettings();
   });
   const delEmpty = ov.querySelector("#pd-delempty");
   if (delEmpty) delEmpty.addEventListener("click", async () => {
