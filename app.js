@@ -99,8 +99,8 @@ const $ = (id) => document.getElementById(id);
 const views = ["view-lock", "view-home", "view-wizard", "view-detail", "view-settings"];
 function show(view) { views.forEach(v => $(v).hidden = v !== view); window.scrollTo(0, 0); }
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const isAdmin = () => S.user && S.user.role === "admin";
-const roleLabel = (r) => r === "admin" ? "administrator" : r === "inne" ? "inne" : "pracownik";
+const isAdmin = () => S.user && (S.user.role === "admin" || S.user.role === "support");
+const roleLabel = (r) => r === "admin" ? "administrator" : r === "support" ? "Support" : r === "inne" ? "inne" : "pracownik";
 function activeProject() { return allowedProjects().find(p => p.id === S.vault.activeProjectId) || allowedProjects()[0]; }
 function allowedProjects() {
   if (isAdmin()) return S.vault.projects;
@@ -381,7 +381,7 @@ async function loadRecords() {
 function applyRole() {
   document.querySelectorAll(".admin-only").forEach(el => { el.style.display = isAdmin() ? "" : "none"; });
   const ub = $("user-badge");
-  ub.textContent = isAdmin() ? "ADMIN" : roleLabel(S.user.role).toUpperCase();
+  ub.textContent = S.user.role === "support" ? "SUPPORT" : isAdmin() ? "ADMIN" : roleLabel(S.user.role).toUpperCase();
   ub.title = S.user.name + " · " + roleLabel(S.user.role);
 }
 
