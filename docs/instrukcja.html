@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SignOff by Offhand — Instrukcja obsługi</title>
+<style>
+  :root{ --navy:#0f1d33; --green:#1f9d6e; --green-d:#0f6e4e; --ink:#1d2430; --muted:#5b6678; --line:#e3e7ee; --bg:#f6f8fb; }
+  *{ box-sizing:border-box; }
+  body{ font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg); margin:0; line-height:1.6; }
+  .wrap{ max-width:820px; margin:0 auto; background:#fff; padding:40px 44px 60px; }
+  header.top{ display:flex; align-items:center; gap:14px; border-bottom:3px solid var(--green); padding-bottom:16px; margin-bottom:8px; }
+  header.top img{ height:42px; }
+  .brand{ font-size:26px; font-weight:700; } .brand b{ color:var(--green); }
+  .sub{ color:var(--muted); font-size:15px; margin:2px 0 0; }
+  h1{ font-size:23px; margin:30px 0 6px; }
+  h2{ font-size:19px; margin:34px 0 8px; padding-top:8px; border-top:1px solid var(--line); }
+  h3{ font-size:16px; margin:18px 0 4px; }
+  p{ margin:8px 0; } ul,ol{ margin:8px 0 8px 4px; padding-left:22px; } li{ margin:5px 0; }
+  .lead{ font-size:16px; color:#39414f; }
+  .step{ background:var(--bg); border:1px solid var(--line); border-left:4px solid var(--green); border-radius:8px; padding:12px 16px; margin:12px 0; }
+  .num{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--green); color:#fff; font-weight:700; font-size:14px; margin-right:8px; }
+  figure{ margin:16px 0; text-align:center; }
+  figure img{ max-height:520px; max-width:100%; border-radius:14px; box-shadow:0 6px 24px rgba(15,29,51,.18); }
+  figcaption{ color:var(--muted); font-size:13px; margin-top:8px; }
+  .grid{ display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; }
+  .grid figure{ flex:1; min-width:220px; }
+  a{ color:var(--green-d); font-weight:600; word-break:break-word; }
+  .box{ border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin:14px 0; background:#fbfdff; }
+  .warn{ border-left:4px solid #d98324; background:#fff8f0; }
+  .ok{ border-left:4px solid var(--green); background:#f1faf5; }
+  code,.kbd{ background:#eef2f8; padding:2px 7px; border-radius:5px; font-family:Consolas,monospace; font-size:.92em; }
+  .toc{ background:var(--navy); color:#dfe6f2; border-radius:12px; padding:16px 22px; margin:20px 0; }
+  .toc a{ color:#7ee0b4; display:inline-block; margin:3px 14px 3px 0; }
+  .field{ display:flex; gap:10px; align-items:baseline; margin:6px 0; }
+  .field b{ min-width:150px; display:inline-block; }
+  footer{ margin-top:40px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+  @media print{ body{ background:#fff; } .wrap{ padding:0; max-width:100%; } figure img{ box-shadow:none; border:1px solid var(--line);} h2{ page-break-after:avoid; } figure{ page-break-inside:avoid; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <img src="img/offhand.png" alt="Offhand">
+    <div>
+      <div class="brand">Sign<b>Off</b> <span style="font-size:14px;color:var(--muted);font-weight:400">by OFFHAND</span></div>
+      <p class="sub">Instrukcja obsługi — aplikacja do zbierania zgód i podpisów na planie</p>
+    </div>
+  </header>
+
+  <p class="lead">SignOff służy do zbierania na telefonie/tablecie zgód na wizerunek (art. 81) i zgód RODO oraz podpisów dokumentów. Działa też bez internetu, a wszystkie dane są zaszyfrowane. Ta instrukcja prowadzi krok po kroku — nie trzeba nic umieć technicznie.</p>
+
+  <div class="toc">
+    <strong>Spis treści</strong><br>
+    <a href="#instalacja">1. Instalacja na telefonie</a>
+    <a href="#logowanie">2. Logowanie</a>
+    <a href="#projekt">3. Wybór projektu</a>
+    <a href="#zgoda">4. Zbieranie zgody krok po kroku</a>
+    <a href="#mail">5. Wysyłka maili (ważne — do zrobienia raz)</a>
+    <a href="#kopia">6. Kopia w chmurze i odzyskiwanie</a>
+    <a href="#problemy">7. Najczęstsze pytania</a>
+  </div>
+
+  <h2 id="instalacja">1. Instalacja na telefonie</h2>
+  <p>Aplikacja otwiera się pod adresem:</p>
+  <div class="box ok"><a href="https://markulus1988.github.io/signoffbyoffhand/">https://markulus1988.github.io/signoffbyoffhand/</a></div>
+  <p>Aby działała jak zwykła ikona (na pełnym ekranie, też offline), dodaj ją na ekran główny:</p>
+  <ul>
+    <li><b>iPhone (Safari):</b> otwórz adres → dotknij ikony <b>Udostępnij</b> (kwadrat ze strzałką w górę) → przewiń → <b>„Do ekranu początkowego"</b> → <b>Dodaj</b>.</li>
+    <li><b>Android (Chrome):</b> otwórz adres → menu <b>⋮</b> (prawy górny róg) → <b>„Zainstaluj aplikację"</b> / „Dodaj do ekranu głównego".</li>
+  </ul>
+  <div class="box warn">Po każdej aktualizacji odśwież aplikację: jeśli na dole pojawi się pasek <b>„Dostępna nowa wersja → Odśwież"</b>, dotknij <b>Odśwież</b>.</div>
+
+  <h2 id="logowanie">2. Logowanie</h2>
+  <div class="grid">
+    <figure><img src="img/01.png" alt="Ekran logowania"><figcaption>Ekran logowania</figcaption></figure>
+    <div style="flex:1;min-width:240px">
+      <div class="step"><span class="num">1</span>Wybierz swoje konto (jeśli jest więcej niż jedno).</div>
+      <div class="step"><span class="num">2</span>Wpisz swój <b>PIN</b> (kropki wypełniają się przy wpisywaniu).</div>
+      <div class="step"><span class="num">3</span>Dotknij <b>Zaloguj</b>.</div>
+      <p style="color:var(--muted);font-size:14px">PIN jest kluczem, który odszyfrowuje dane. Po 5 błędnych próbach konto blokuje się na chwilę. Aplikacja sama się wylogowuje po 5 minutach bezczynności.</p>
+    </div>
+  </div>
+
+  <h2 id="projekt">3. Wybór projektu</h2>
+  <div class="grid">
+    <div style="flex:1;min-width:240px">
+      <p>Po zalogowaniu widzisz pulpit. U góry wybierasz <b>projekt</b> (produkcję), do którego zbierasz zgody. Administrator może utworzyć nowy projekt przyciskiem <b>„＋ nowy"</b>.</p>
+      <p>Kafelki pokazują liczby: <b>zebrane</b>, <b>oczekuje</b>, <b>cofnięte</b>. Niżej jest lista ostatnich zgód i wyszukiwarka osób.</p>
+    </div>
+    <figure><img src="img/03.png" alt="Ekran główny"><figcaption>Ekran główny (pulpit projektu)</figcaption></figure>
+  </div>
+
+  <h2 id="zgoda">4. Zbieranie zgody krok po kroku</h2>
+  <p>Na ekranie głównym dotknij dużego przycisku <b>„＋ Nowa zgoda"</b> i przejdź przez 5 kroków:</p>
+
+  <h3>Krok 1 — Dane osoby</h3>
+  <p>Wpisz imię i nazwisko (wymagane), opcjonalnie e-mail (na ten adres pójdzie kopia), telefon, rolę. Jeśli osoba jest małoletnia — zaznacz pole i wpisz dane opiekuna.</p>
+
+  <h3>Krok 2 — Treść zgody i dokumenty</h3>
+  <div class="grid">
+    <figure><img src="img/04.png" alt="Treść zgody i checkboxy"><figcaption>Krok 2 — treść i zgody</figcaption></figure>
+    <div style="flex:1;min-width:240px">
+      <p>Przewiń treść do końca — dopiero wtedy odblokują się pola wyboru. Zaznacz zgody:</p>
+      <ul>
+        <li><b>Wizerunek (art. 81)</b> — obowiązkowe,</li>
+        <li><b>RODO</b> — obowiązkowe,</li>
+        <li><b>Marketing</b> — dobrowolne.</li>
+      </ul>
+      <p>Jeśli do projektu dołączony jest dokument PDF (np. regulamin), osoba też go potwierdza.</p>
+    </div>
+  </div>
+
+  <h3>Krok 3 — Podpis</h3>
+  <div class="grid">
+    <div style="flex:1;min-width:240px">
+      <p>Podaj telefon osobie — podpisuje <b>palcem lub rysikiem</b> na jasnym polu. Przycisk <b>„↺ Wyczyść"</b> pozwala zacząć od nowa. Zapisywany jest tylko obraz podpisu (bez danych biometrycznych).</p>
+    </div>
+    <figure><img src="img/05.png" alt="Podpis"><figcaption>Krok 3 — podpis</figcaption></figure>
+  </div>
+
+  <h3>Krok 4 — Zdjęcie</h3>
+  <div class="grid">
+    <figure><img src="img/06.png" alt="Zdjęcie"><figcaption>Krok 4 — zdjęcie</figcaption></figure>
+    <div style="flex:1;min-width:240px">
+      <p>Zrób zdjęcie osoby podpisującej (dowód, że to ona). Duży jasny przycisk na środku to <b>spust migawki</b>. Po lewej flesz, po prawej przełączenie aparatu (przód/tył).</p>
+    </div>
+  </div>
+
+  <h3>Krok 5 — Zapis</h3>
+  <div class="grid">
+    <div style="flex:1;min-width:240px">
+      <p>Aplikacja zapisuje zgodę: nadaje jej numer, sumę kontrolną (SHA-256) i kartę dowodową. Jeśli podałaś e-mail osoby i wysyłka jest włączona — kopia PDF pójdzie automatycznie. Możesz od razu zacząć <b>„＋ Następną zgodę"</b>.</p>
+    </div>
+    <figure><img src="img/07.png" alt="Zgoda zapisana"><figcaption>Zgoda zapisana i zabezpieczona</figcaption></figure>
+  </div>
+
+  <h2 id="mail">5. Wysyłka maili — do zrobienia RAZ</h2>
+  <p class="lead">Żeby kopie zgód mogły iść e-mailem z Twojego adresu <code>hankanobis@offhandfilms.com</code>, trzeba raz połączyć aplikację z pocztą. To dwa etapy. Adres jest już wpisany — Ty dodajesz tylko <b>hasło aplikacji</b> z Google.</p>
+
+  <h3>Etap A — utwórz „hasło aplikacji" w Google (raz)</h3>
+  <p>Zwykłe hasło do poczty tu nie zadziała — Google wymaga osobnego, 16-znakowego „hasła aplikacji". Zaloguj się jako <b>hankanobis@offhandfilms.com</b> i:</p>
+  <div class="step"><span class="num">1</span>Wejdź na <a href="https://myaccount.google.com/security">myaccount.google.com/security</a> i włącz <b>Weryfikację dwuetapową</b> (jeśli nie jest włączona).</div>
+  <div class="step"><span class="num">2</span>Wejdź na <a href="https://myaccount.google.com/apppasswords">myaccount.google.com/apppasswords</a>.</div>
+  <div class="step"><span class="num">3</span>Wpisz nazwę <b>SignOff</b> → kliknij <b>Utwórz</b>.</div>
+  <div class="step"><span class="num">4</span>Google pokaże <b>16-znakowy kod</b> (np. <code>abcd efgh ijkl mnop</code>) — <b>skopiuj go</b>. Spacje nie mają znaczenia.</div>
+
+  <h3>Etap B — wklej go w aplikacji (raz)</h3>
+  <div class="step"><span class="num">1</span>W aplikacji dotknij <b>⚙ (Ustawienia)</b> w prawym górnym rogu.</div>
+  <div class="step"><span class="num">2</span>Znajdź sekcję <b>„✉ Wysyłka e-mail do podpisujących"</b>.</div>
+  <div class="step"><span class="num">3</span><b>Adres e-mail nadawcy</b> jest już wpisany: <code>hankanobis@offhandfilms.com</code>.</div>
+  <div class="step"><span class="num">4</span>W polu <b>Hasło</b> wklej te 16 znaków (to hasło aplikacji, nie zwykłe hasło).</div>
+  <div class="step"><span class="num">5</span>Dotknij <b>💾 Zapisz nadawcę</b>.</div>
+  <div class="step"><span class="num">6</span>Dotknij <b>✉ Wyślij test</b> → wpisz dowolny swój adres → sprawdź, czy wiadomość dotarła (zajrzyj też do SPAM-u).</div>
+
+  <div class="box ok"><b>Gotowe.</b> Od tej chwili po każdej podpisanej zgodzie kopia PDF wysyła się sama (gdy włączony jest haczyk „Wysyłaj kopię automatycznie" w Ustawieniach). Serwer/port wykrywają się same — nie musisz nic więcej wpisywać.</div>
+
+  <div class="box warn"><b>Gdyby nie szło:</b> jeśli w Google nie widzisz opcji „Hasła aplikacji", to administrator konta firmowego ma ją wyłączoną — poproś o jej włączenie. Jeśli test pokaże błąd pod przyciskiem — przepisz/zrób zdjęcie tego komunikatu i przekaż Markowi.</div>
+
+  <h2 id="kopia">6. Kopia w chmurze i odzyskiwanie</h2>
+  <p>Każda zgoda jest automatycznie wysyłana jako <b>zaszyfrowana kopia</b> do chmury — na wypadek utraty telefonu. Aby odzyskać dane na nowym urządzeniu:</p>
+  <ol>
+    <li>Zainstaluj aplikację (punkt 1) i przejdź szybką konfigurację.</li>
+    <li>Wejdź w <b>Ustawienia → ☁ Chmura → „Przywróć z chmury"</b>.</li>
+    <li>Wybierz kopię (jest też lista <b>niezmienialnej historii</b> z datami) → zaloguj się PIN-em.</li>
+  </ol>
+
+  <h2 id="problemy">7. Najczęstsze pytania</h2>
+  <h3>Aplikacja wygląda inaczej / brak nowych funkcji</h3>
+  <p>Odśwież ją (pasek „Odśwież" na dole) albo usuń ikonę i dodaj ponownie z adresu.</p>
+  <h3>Nie pamiętam PIN-u</h3>
+  <p>Resetuje go administrator (Marek lub drugi administrator). Ze względów bezpieczeństwa nie da się go odzyskać inaczej.</p>
+  <h3>Czy działa bez internetu?</h3>
+  <p>Tak — zgody zbiera się offline. Kopia w chmurze i e-maile wyślą się, gdy wróci sieć.</p>
+
+  <footer>
+    SignOff by Offhand · przygotował Marek Żak dla Offhand Hanna Nobis · wersja instrukcji 1.0<br>
+    Szczegóły o bezpieczeństwie i ochronie danych: zobacz osobną kartę <b>„Bezpieczeństwo i prywatność"</b>.
+  </footer>
+
+</div>
+</body>
+</html>
