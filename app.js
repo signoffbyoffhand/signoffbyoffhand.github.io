@@ -379,6 +379,7 @@ async function loadRecords() {
 
 /* ===================== Role w UI ===================== */
 function applyRole() {
+  if (!S.user) return;
   document.querySelectorAll(".admin-only").forEach(el => { el.style.display = isAdmin() ? "" : "none"; });
   const ub = $("user-badge");
   ub.textContent = S.user.role === "support" ? "SUPPORT" : isAdmin() ? "ADMIN" : roleLabel(S.user.role).toUpperCase();
@@ -431,7 +432,11 @@ function renderStats() {
 function renderList(filter) {
   const list = $("records-list");
   const f = (filter || "").toLowerCase();
-  const items = projectRecords().filter(r => !f || (!r.corrupted && (`${r.person.first} ${r.person.last}`.toLowerCase().includes(f))));
+  let items = projectRecords().filter(r => !f || (!r.corrupted && (`${r.person.first} ${r.person.last}`.toLowerCase().includes(f))));
+  if (!S.sortBy) S.sortBy = "date";
+  items = [...items].sort((a, b) => S.sortBy === "name"
+    ? ((a.person && a.person.last || "").localeCompare((b.person && b.person.last) || "", "pl") || ((a.person && a.person.first) || "").localeCompare((b.person && b.person.first) || "", "pl"))
+    : ((b.createdAt || "").localeCompare(a.createdAt || "")));
   if (S.selectMode === undefined) S.selectMode = false;
   if (!S.selected) S.selected = new Set();
   const selectable = items.filter(r => !r.corrupted);
@@ -441,14 +446,33 @@ function renderList(filter) {
   const head = document.createElement("div");
   head.className = "list-head";
   head.innerHTML = `<span class="list-head-title">OSTATNIE ZGODY</span>`;
+  const right = document.createElement("div");
+  right.className = "list-head-right";
+  if (selectable.length || filter) {
+    const seg = document.createElement("div");
+    seg.className = "sortseg";
+    seg.innerHTML = `<button data-s="date" class="${S.sortBy === "date" ? "on" : ""}">Data</button><button data-s="name" class="${S.sortBy === "name" ? "on" : ""}">Nazwisko</button>`;
+    seg.querySelectorAll("button").forEach(b => b.addEventListener("click", () => { S.sortBy = b.dataset.s; renderList($("search").value); }));
+    right.appendChild(seg);
+  }
   if (selectable.length) {
     const tg = document.createElement("button");
     tg.className = "btn-selmode";
     tg.textContent = S.selectMode ? "Gotowe" : "✓ Zaznacz";
     tg.addEventListener("click", () => { S.selectMode = !S.selectMode; if (!S.selectMode) S.selected.clear(); renderList($("search").value); });
-    head.appendChild(tg);
+    right.appendChild(tg);
   }
+  head.appendChild(right);
   list.appendChild(head);
+  // legenda statusu kopii w chmurze
+  if (selectable.length) {
+    const lg = document.createElement("div");
+    lg.className = "list-legend";
+    lg.innerHTML = fbCfg()
+      ? `<span class="lg dot-ok">w chmurze (odwracalne)</span><span class="lg dot-no">brak kopii</span>`
+      : `<span class="lg dot-no">chmura wyłączona — żadna zgoda nie ma kopii (usunięcie nieodwracalne)</span>`;
+    list.appendChild(lg);
+  }
 
   // pasek akcji zbiorczych
   if (S.selectMode && selectable.length) {
@@ -462,6 +486,7 @@ function renderList(filter) {
       <div class="bulk-actions">
         <button class="btn bulk-send">↗ Wyślij</button>
         <button class="btn bulk-dl">↓ Pobierz</button>
+        ${isAdmin() ? '<button class="btn danger bulk-del">🗑 Usuń</button>' : ""}
       </div>`;
     bar.querySelector(".bulk-all").addEventListener("click", () => {
       if (allOn) S.selected.clear(); else selectable.forEach(r => S.selected.add(r.id));
@@ -476,6 +501,12 @@ function renderList(filter) {
       const chosen = selectable.filter(r => S.selected.has(r.id));
       if (!chosen.length) return alert("Najpierw zaznacz zgody.");
       for (const r of chosen) { try { await downloadPDF(r); } catch {} await new Promise(res => setTimeout(res, 400)); }
+    });
+    const bdel = bar.querySelector(".bulk-del");
+    if (bdel) bdel.addEventListener("click", async () => {
+      const chosen = selectable.filter(r => S.selected.has(r.id));
+      if (!chosen.length) return alert("Najpierw zaznacz zgody do usunięcia.");
+      await deleteRecords(chosen);
     });
     list.appendChild(bar);
   }
@@ -497,9 +528,12 @@ function renderList(filter) {
     const revoked = r.status !== "active";
     const sent = S.sentIds && S.sentIds.has(r.id);
     const checked = S.selected.has(r.id);
+    const backed = isBackedUp(r);
+    div.classList.add(backed ? "rec-backed" : "rec-nobackup");
     const pills = [
       `<span class="spill ok">✓ PODPISANO</span>`,
       sent ? `<span class="spill sent">↗ WYSŁANO</span>` : "",
+      backed ? `<span class="spill cloud">☁ w chmurze</span>` : `<span class="spill nocloud">☁ brak kopii</span>`,
       revoked ? `<span class="spill warn">RODO COFNIĘTA</span>` : "",
       r.person.isMinor ? `<span class="spill mut">MAŁOLETNI</span>` : "",
     ].join("");
@@ -1353,20 +1387,36 @@ async function snapshotNow() {
     return true;
   } catch { return false; }
 }
-/* Usunięcie zgody — wyłącznie administrator. Najpierw kopia do chmury, potem usunięcie. */
-async function deleteRecord(r) {
-  if (!isAdmin()) return;
-  const cloud = fbCfg();
-  if (!confirm(`Usunąć zgodę „${r.person.first} ${r.person.last}”?\n\n` +
-    (cloud ? "Najpierw zapiszę niezmienialną kopię w chmurze — będzie ją można odtworzyć przez „Przywróć z chmury”." :
-             "⚠ Chmura nie jest włączona — usunięcie będzie nieodwracalne na tym urządzeniu."))) return;
-  if (cloud) { const ok = await snapshotNow(); if (!ok && !confirm("Nie udało się zapisać kopii w chmurze. Usunąć mimo to (nieodwracalnie)?")) return; }
-  await tx("records", "readwrite", s => s.delete(r.id));
-  try { await tx("outbox", "readwrite", s => s.delete(r.id)); } catch {}
-  S.records = S.records.filter(x => x.id !== r.id);
+/* Czy zgoda ma już kopię w chmurze (była objęta ostatnią udaną synchronizacją). */
+function isBackedUp(r) {
+  return !!fbCfg() && !!S.config.lastSync && (r.createdAt || "") <= S.config.lastSync;
+}
+/* Usunięcie zgód — wyłącznie administrator. Najpierw kopia do chmury, potem usunięcie.
+   Komunikat mówi: czy powstanie kopia, czy to odwracalne i prosi o potwierdzenie. */
+async function deleteRecords(recs) {
+  if (!isAdmin() || !recs.length) return;
+  const cloud = !!fbCfg();
+  const n = recs.length;
+  const withCopy = recs.filter(isBackedUp).length, without = n - withCopy;
+  const head = n === 1 ? "Usunąć tę zgodę?" : `Usunąć zaznaczone zgody: ${n}?`;
+  let msg;
+  if (cloud) {
+    msg = `${head}\n\nPrzed usunięciem zapiszę kopię w chmurze — usunięcie będzie ODWRACALNE (odzyskasz przez „Przywróć z chmury”).`
+      + (without ? `\n\nZ wybranych: ${withCopy} ma już kopię, ${without} jeszcze nie — zapiszę je wszystkie teraz.` : "")
+      + `\n\nNa pewno usunąć?`;
+  } else {
+    msg = `${head}\n\n⚠ Chmura jest wyłączona — kopia NIE powstanie, więc usunięcie będzie NIEODWRACALNE.\n\nNa pewno usunąć?`;
+  }
+  if (!confirm(msg)) return;
+  if (cloud) { const ok = await snapshotNow(); if (!ok && !confirm("Nie udało się zapisać kopii w chmurze. Usunąć mimo to — NIEODWRACALNIE?")) return; }
+  for (const r of recs) { await tx("records", "readwrite", s => s.delete(r.id)); try { await tx("outbox", "readwrite", s => s.delete(r.id)); } catch {} }
+  const ids = new Set(recs.map(r => r.id));
+  S.records = S.records.filter(x => !ids.has(x.id));
+  S.selectMode = false; if (S.selected) S.selected.clear();
   scheduleSync();
   enterHome();
 }
+async function deleteRecord(r) { return deleteRecords([r]); }
 
 async function revokeRodo(r) {
   if (!confirm(`Odnotować cofnięcie zgody RODO przez ${r.person.first} ${r.person.last}?\n\nCofnięcie działa na przyszłość — nie unieważnia zezwolenia art. 81 dla już wyprodukowanego materiału. Dokument pozostaje w archiwum jako dowód.`)) return;
