@@ -662,6 +662,20 @@ details.adv summary b { color: var(--ink-2); }
 .cloud-warning .cw-txt b { font-size: .86rem; color: #ff9a9a; }
 .cloud-warning .cw-txt span { font-size: .72rem; color: var(--ink-2); line-height: 1.4; }
 .cloud-warning .cw-chev { font-size: 1.3rem; color: #ff9a9a; }
+/* Ustawienia: zwijane karty tematyczne */
+.set-group { border: 1px solid var(--line); border-radius: 14px; background: var(--card-flat); margin: 0 0 12px; overflow: hidden; }
+.set-group > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 14px 16px; user-select: none; }
+.set-group > summary::-webkit-details-marker { display: none; }
+.set-group .sg-ic { font-size: 1.2rem; line-height: 1; width: 1.6rem; text-align: center; flex: 0 0 auto; }
+.set-group .sg-meta { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.set-group .sg-meta b { font-size: .95rem; color: var(--ink); }
+.set-group .sg-meta > span { font-size: .72rem; color: var(--ink-3); line-height: 1.3; }
+.set-group .sg-chev { font-size: 1.3rem; color: var(--ink-3); flex: 0 0 auto; transition: transform .15s; }
+.set-group[open] > summary .sg-chev { transform: rotate(90deg); }
+.set-group[open] > summary { border-bottom: 1px solid var(--line); }
+.set-group-body { padding: 6px 16px 18px; }
+.set-sub { font-size: .92rem; margin: 20px 0 8px; color: var(--ink-2); }
+.set-group-body > .set-sub:first-child { margin-top: 12px; }
 .hb-net, #net-status { display: none; }
 .hb-icon { width: 32px; height: 32px; flex: 0 0 32px; border-radius: 9px; background: rgba(255,255,255,.05); border: none; cursor: pointer; color: var(--ink-2); display: flex; align-items: center; justify-content: center; padding: 0; }
 .hb-icon.logout { color: var(--logout); }

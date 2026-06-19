@@ -411,7 +411,7 @@ function enterHome() {
   flushOutbox();
   show("view-home");
 }
-$("btn-new-project").addEventListener("click", () => { if (isAdmin()) { enterSettings(); setTimeout(() => { const i = $("new-project-name"); if (i) { i.scrollIntoView({ block: "center" }); i.focus(); } }, 100); } });
+$("btn-new-project").addEventListener("click", () => { if (isAdmin()) { enterSettings(); setTimeout(() => { const g = $("grp-org"); if (g) g.open = true; const i = $("new-project-name"); if (i) { i.scrollIntoView({ block: "center" }); i.focus(); } }, 100); } });
 /* Banner ostrzegawczy na pulpicie: pokazuje się tylko adminowi, gdy kopia w chmurze jest wyłączona. Klik prowadzi do ustawień chmury. */
 function updateCloudWarning() {
   const el = $("cloud-warning");
@@ -419,7 +419,7 @@ function updateCloudWarning() {
 }
 $("cloud-warning").addEventListener("click", () => {
   enterSettings();
-  setTimeout(() => { const i = $("fb-password"); if (i) { i.scrollIntoView({ block: "center" }); i.focus(); } }, 100);
+  setTimeout(() => { const g = $("grp-cloud"); if (g) g.open = true; const i = $("fb-password"); if (i) { i.scrollIntoView({ block: "center" }); i.focus(); } }, 100);
 });
 $("project-select").addEventListener("change", async (e) => {
   S.vault.activeProjectId = e.target.value;

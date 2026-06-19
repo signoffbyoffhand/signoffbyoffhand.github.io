@@ -268,22 +268,27 @@
   <main class="container narrow">
 
     <div class="admin-only">
-      <h3>Firma</h3>
+    <details class="set-group" id="grp-org" open>
+      <summary class="set-group-head"><span class="sg-ic">🏢</span><span class="sg-meta"><b>Firma i projekty</b><span>Producent danych, e-mail firmowy i projekty zgód</span></span><span class="sg-chev">›</span></summary>
+      <div class="set-group-body">
+      <h4 class="set-sub">Firma</h4>
       <label>Administrator danych / producent<input type="text" id="set-producer"></label>
       <label>E-mail firmowy (nadawca kopii)<input type="email" id="set-email"></label>
       <button class="btn primary" id="btn-set-save">Zapisz</button>
-      <hr>
 
-      <h3>Projekty zbierania zgód</h3>
+      <h4 class="set-sub">Projekty zbierania zgód</h4>
       <p class="tiny muted">Każdy projekt może mieć własną treść zgody, własne dokumenty PDF do podpisu oraz listę uprawnionych pracowników (puste = wszyscy). Klauzula RODO i informacja o e-podpisie dołączane zawsze.</p>
       <div id="projects-list"></div>
       <div class="add-box">
         <label>Nazwa nowego projektu<input type="text" id="new-project-name" placeholder="np. Regulamin eventu / Zgody — film X"></label>
         <button class="btn" id="btn-add-project">＋ Dodaj projekt</button>
       </div>
-      <hr>
+      </div>
+    </details>
 
-      <h3>Konta użytkowników</h3>
+    <details class="set-group" id="grp-accounts">
+      <summary class="set-group-head"><span class="sg-ic">👥</span><span class="sg-meta"><b>Konta użytkowników</b><span>Kto może zbierać zgody i z jaką rolą</span></span><span class="sg-chev">›</span></summary>
+      <div class="set-group-body">
       <p class="tiny muted">Administrator może wszystko. Pracownik oraz „Inne” mogą wyłącznie zbierać zgody w przydzielonych projektach i zmienić własny PIN. Reset PIN-u nie wymaga znajomości starego — klucz danych jest niezależny od PIN-ów.</p>
       <div id="accounts-list"></div>
       <div class="add-box">
@@ -298,9 +303,13 @@
         <p class="error" id="acc-error" hidden></p>
         <button class="btn" id="btn-add-acc">＋ Utwórz konto</button>
       </div>
-      <hr>
+      </div>
+    </details>
 
-      <h3>☁ Kopia w chmurze (Firebase / Firestore)</h3>
+    <details class="set-group" id="grp-cloud">
+      <summary class="set-group-head"><span class="sg-ic">☁</span><span class="sg-meta"><b>Kopia w chmurze i synchronizacja</b><span>Backup E2E (Firebase) oraz alternatywny własny serwer</span></span><span class="sg-chev">›</span></summary>
+      <div class="set-group-body">
+      <h4 class="set-sub">☁ Kopia w chmurze (Firebase / Firestore)</h4>
       <p class="tiny muted">Trwała, zaszyfrowana kopia w UE (Warszawa). Dane są szyfrowane na urządzeniu — Google nie widzi ich treści. Wpisz <b>hasło konta technicznego</b> (od Marka) i włącz — reszta jest już ustawiona.</p>
       <label class="check"><input type="checkbox" id="fb-enabled"><span>Włącz kopię w chmurze (Firebase)</span></label>
       <label>Hasło konta technicznego<input type="password" id="fb-password" autocomplete="off" placeholder="••••••••••••"></label>
@@ -315,9 +324,9 @@
       </div>
       <p id="fb-status" class="tiny muted"></p>
       <div id="fb-restore-list"></div>
-      <hr>
 
-      <details class="adv"><summary><b>☁ Własny serwer kopii (alternatywa — zwykle niepotrzebne)</b></summary>
+      <h4 class="set-sub">Własny serwer kopii (alternatywa)</h4>
+      <details class="adv"><summary><b>☁ Pokaż ustawienia własnego serwera (zwykle niepotrzebne)</b></summary>
       <p class="tiny muted">Zamiast Firebase można użyć własnego serwera (server.js). Klucz synchronizacji wyświetla konsola serwera przy starcie.</p>
       <label>Adres serwera<input type="text" id="sync-url" placeholder="np. https://twoj-serwer.pl lub http://localhost:4290"></label>
       <label>Klucz synchronizacji<input type="password" id="sync-key" autocomplete="off"></label>
@@ -331,9 +340,13 @@
       <p id="sync-status" class="tiny muted"></p>
       <div id="restore-list"></div>
       </details>
-      <hr>
+      </div>
+    </details>
 
-      <h3>✉ Wysyłka e-mail do podpisujących</h3>
+    <details class="set-group" id="grp-email">
+      <summary class="set-group-head"><span class="sg-ic">✉</span><span class="sg-meta"><b>Wysyłka e-mail do podpisujących</b><span>Nadawca kopii zgód i kolejka wysyłki</span></span><span class="sg-chev">›</span></summary>
+      <div class="set-group-body">
+      <h4 class="set-sub">✉ Nadawca e-mail</h4>
       <p class="tiny muted">Kopie zgód wychodzą z adresu, który tu podasz. Wpisz e-mail i hasło — serwer i port aplikacja ustawi sama. Wymaga skonfigurowanego serwera powyżej (☁ Chmura) — to on wysyła w imieniu aplikacji.</p>
       <div class="rodo-note"><b>Ważne — Gmail, Outlook, WP, Onet itp.:</b> nie wpisuj zwykłego hasła do logowania (zostanie odrzucone). Trzeba wygenerować <b>„hasło aplikacji”</b>. Dla Gmaila: Konto Google → Bezpieczeństwo → włącz <b>weryfikację dwuetapową</b> → <b>Hasła aplikacji</b> → utwórz i wklej tutaj 16 znaków.</div>
       <label>Adres e-mail nadawcy<input type="email" id="mail-email" autocomplete="off" placeholder="np. zgody@offhand.pl lub twoj@gmail.com"></label>
@@ -347,33 +360,41 @@
         <button class="btn" id="btn-mail-test" data-help="Wysyła testową wiadomość na Twój własny adres, by sprawdzić, czy wysyłka działa.">✉ Wyślij test do siebie</button>
       </div>
       <p id="mail-status" class="tiny muted"></p>
-      <hr>
 
-      <h3>Kolejka kopii dla podpisujących</h3>
+      <h4 class="set-sub">Kolejka kopii dla podpisujących</h4>
       <div id="outbox-list" class="records"></div>
-      <hr>
+      </div>
+    </details>
 
-      <h3>Dane i kopie lokalne</h3>
+    <details class="set-group" id="grp-local">
+      <summary class="set-group-head"><span class="sg-ic">💾</span><span class="sg-meta"><b>Dane i kopie lokalne</b><span>Eksport/import zaszyfrowanej bazy do pliku</span></span><span class="sg-chev">›</span></summary>
+      <div class="set-group-body">
       <div class="wnav-mini">
         <button class="btn" id="btn-export2">⬇ Eksport do pliku (zaszyfrowany)</button>
         <button class="btn" id="btn-import">⬆ Przywróć z pliku</button>
         <input type="file" id="import-file" accept="application/json" hidden>
       </div>
       <p class="tiny muted" id="storage-info"></p>
-      <hr>
+      </div>
+    </details>
     </div>
 
-    <h3>🔑 Mój PIN</h3>
-    <div class="grid2">
-      <label>Nowy PIN (min. 6 cyfr)<input type="password" id="pin-new" inputmode="numeric" autocomplete="off"></label>
-      <label>Powtórz nowy PIN<input type="password" id="pin-new2" inputmode="numeric" autocomplete="off"></label>
-    </div>
-    <p class="error" id="pin-error" hidden></p>
-    <button class="btn" id="btn-change-pin">Zmień mój PIN</button>
+    <details class="set-group" id="grp-pin" open>
+      <summary class="set-group-head"><span class="sg-ic">🔑</span><span class="sg-meta"><b>Mój PIN</b><span>Zmiana własnego kodu dostępu</span></span><span class="sg-chev">›</span></summary>
+      <div class="set-group-body">
+      <div class="grid2">
+        <label>Nowy PIN (min. 6 cyfr)<input type="password" id="pin-new" inputmode="numeric" autocomplete="off"></label>
+        <label>Powtórz nowy PIN<input type="password" id="pin-new2" inputmode="numeric" autocomplete="off"></label>
+      </div>
+      <p class="error" id="pin-error" hidden></p>
+      <button class="btn" id="btn-change-pin">Zmień mój PIN</button>
+      </div>
+    </details>
 
     <div class="admin-only">
-      <hr>
-      <h3>Bezpieczeństwo</h3>
+    <details class="set-group" id="grp-security">
+      <summary class="set-group-head"><span class="sg-ic">🛡</span><span class="sg-meta"><b>Bezpieczeństwo</b><span>Jak chronione są dane</span></span><span class="sg-chev">›</span></summary>
+      <div class="set-group-body">
       <ul class="sec-list">
         <li>🔐 Losowy klucz główny danych (AES-256); PIN każdego konta tylko „opakowuje” klucz (PBKDF2, 310 000 iteracji) — dzięki temu reset PIN-u nie wymaga przeszyfrowania bazy</li>
         <li>⛔ Narastająca blokada konta po 5 błędnych próbach PIN</li>
@@ -383,6 +404,8 @@
         <li>🧾 Kwalifikowany znacznik czasu (eIDAS): <span class="badge planned">do integracji z API TSP</span></li>
       </ul>
       <p class="tiny muted">Wersja produkcyjna-kandydat. Przed startem: weryfikacja klauzul przez prawnika; zalecana integracja znacznika czasu eIDAS.</p>
+      </div>
+    </details>
     </div>
     <p class="credit">SignOff by Offhand · przygotował Marek Żak dla Offhand Hanna Nobis</p>
   </main>
