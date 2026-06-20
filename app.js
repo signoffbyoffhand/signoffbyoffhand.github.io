@@ -1874,7 +1874,7 @@ function renderAccounts() {
     row.innerHTML = `
       <div class="attach-info"><b>${esc(acc.name)}</b>
         <span class="tiny muted">${roleLabel(acc.role)}${acc.active ? "" : " · DEZAKTYWOWANE"}${acc.id === S.user.id ? " · (to Ty)" : ""}</span></div>
-      <button class="btn" data-act="reset">🔑 Reset PIN</button>
+      <button class="btn" data-act="reset">${acc.id === S.user.id ? "🔑 Zmień mój PIN" : "🔑 Reset PIN"}</button>
       ${acc.id !== S.user.id ? `<button class="btn" data-act="toggle">${acc.active ? "⏸ Dezaktywuj" : "▶ Aktywuj"}</button><button class="btn danger" data-act="del">🗑</button>` : ""}
       <div class="reset-box" hidden>
         <input type="password" placeholder="nowy PIN (6+ cyfr)" inputmode="numeric" class="reset-pin">

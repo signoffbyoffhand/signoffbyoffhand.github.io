@@ -289,8 +289,8 @@
       <div class="set-group-body">
       <h4 class="set-sub">Administrator danych (podmiot na zgodzie)</h4>
       <p class="tiny muted">Podmiot, który figuruje na <b>każdej zgodzie jako administrator danych (RODO)</b> — z nazwą, adresem, NIP/identyfikatorem i e-mailem kontaktowym (do zgłaszania praw). Możesz mieć kilku i przypisywać różnych do projektów (w karcie projektu). „⭐ Domyślny" wchodzi tam, gdzie projekt nie ma własnego. <i>To podmiot prawny na zgodzie — nie mylić z rolą „administrator" konta w aplikacji.</i></p>
-      <div id="admins-list"></div>
       <div class="add-box"><button class="btn" id="btn-add-admin">＋ Dodaj administratora</button></div>
+      <div id="admins-list"></div>
 
       <h4 class="set-sub">Projekty zbierania zgód</h4>
       <p class="tiny muted">Projekt to zestaw ustawień jednego przedsięwzięcia (np. konkretnego filmu/eventu): własna treść zgody, dokumenty PDF do podpisu (z oznaczeniem obowiązkowych), wymóg zdjęcia-dowodu i lista pracowników, którzy mogą w nim zbierać (puste = wszyscy). Klauzula RODO i informacja o e-podpisie dołączane zawsze.</p>
@@ -306,7 +306,6 @@
       <summary class="set-group-head"><span class="sg-ic">👥</span><span class="sg-meta"><b>Konta użytkowników</b><span>Kto może zbierać zgody i z jaką rolą</span></span><span class="sg-chev">›</span></summary>
       <div class="set-group-body">
       <p class="tiny muted">Administrator może wszystko. Pracownik oraz „Inne” mogą wyłącznie zbierać zgody w przydzielonych projektach i zmienić własny PIN. Reset PIN-u nie wymaga znajomości starego — klucz danych jest niezależny od PIN-ów.</p>
-      <div id="accounts-list"></div>
       <div class="add-box">
         <div class="grid2">
           <label>Imię i nazwisko<input type="text" id="new-acc-name" placeholder="np. Jan Pracownik"></label>
@@ -319,6 +318,7 @@
         <p class="error" id="acc-error" hidden></p>
         <button class="btn" id="btn-add-acc">＋ Utwórz konto</button>
       </div>
+      <div id="accounts-list"></div>
       </div>
     </details>
 
