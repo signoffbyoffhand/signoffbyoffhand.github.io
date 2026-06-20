@@ -142,7 +142,7 @@ a { color: var(--accent); }
 .tiny.muted, p.tiny.muted { color: var(--muted); }
 
 /* ---------- inputs ---------- */
-input[type=text], input[type=email], input[type=tel], input[type=password], input[type=search] {
+input:not([type]), input[type=text], input[type=email], input[type=tel], input[type=password], input[type=search] {
   width: 100%; padding: 14px 15px; margin-top: 5px;
   border: 1px solid var(--line-strong); border-radius: 14px;
   font-size: 1rem; font-family: var(--ui); background: var(--card-flat); color: var(--ink);
