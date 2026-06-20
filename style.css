@@ -510,6 +510,16 @@ details.adv summary b { color: var(--ink-2); }
 .reset-link:hover { text-decoration: underline; }
 .reset-steps { text-align: left; margin: 8px 0 4px; padding-left: 22px; color: var(--ink-2); }
 .reset-steps li { margin: 7px 0; line-height: 1.5; }
+/* ---------- Modale UI (alert/confirm/prompt) ---------- */
+.ui-modal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(6,12,24,.74); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); animation: ui-fade .12s ease; }
+.ui-modal-card { width: 100%; max-width: 420px; background: var(--card-grad); border: 1px solid var(--line-strong); border-radius: 18px; padding: 22px 22px 18px; box-shadow: 0 24px 70px rgba(0,0,0,.55); animation: ui-pop .15s ease; }
+.ui-modal-title { margin: 0 0 10px; font-size: 1.15rem; }
+.ui-modal-msg { margin: 0 0 16px; color: var(--ink-2); line-height: 1.55; font-size: .95rem; }
+.ui-modal-input { width: 100%; margin: 0 0 16px; }
+.ui-modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.ui-modal-actions .btn { min-width: 104px; }
+@keyframes ui-fade { from { opacity: 0; } }
+@keyframes ui-pop { from { transform: translateY(10px) scale(.97); opacity: 0; } }
 #login-hint { text-align: center; }
 
 /* ---------- Karta dowodowa (ekran „Zgoda zapisana") ---------- */

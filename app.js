@@ -109,6 +109,46 @@ function allowedProjects() {
 async function saveVault() { await metaSet("vault", await encryptJSON(S.key, S.vault)); scheduleSync(); }
 async function saveConfig() { await metaSet("config", S.config); }
 
+/* ===================== Modale UI (zamiast natywnych alert/confirm/prompt) ===================== */
+function uiModal({ title = "", message = "", okLabel = "OK", cancelLabel = null, danger = false, input = null }) {
+  return new Promise((resolve) => {
+    const hasInput = input !== null;
+    const overlay = document.createElement("div");
+    overlay.className = "ui-modal";
+    overlay.innerHTML =
+      `<div class="ui-modal-card" role="dialog" aria-modal="true">` +
+      (title ? `<h3 class="ui-modal-title">${esc(title)}</h3>` : "") +
+      (message ? `<p class="ui-modal-msg">${esc(message).replace(/\n/g, "<br>")}</p>` : "") +
+      (hasInput ? `<input class="ui-modal-input" type="${input.type || "text"}" inputmode="${input.inputmode || ""}" placeholder="${esc(input.placeholder || "")}" value="${esc(input.value || "")}">` : "") +
+      `<div class="ui-modal-actions">` +
+      (cancelLabel ? `<button class="btn ui-modal-cancel">${esc(cancelLabel)}</button>` : "") +
+      `<button class="btn primary ${danger ? "danger" : ""} ui-modal-ok">${esc(okLabel)}</button>` +
+      `</div></div>`;
+    document.body.appendChild(overlay);
+    const inputEl = overlay.querySelector(".ui-modal-input");
+    const done = (val) => { document.removeEventListener("keydown", onKey); overlay.remove(); resolve(val); };
+    const ok = () => done(hasInput ? (inputEl ? inputEl.value : "") : true);
+    const cancel = () => done(hasInput ? null : false);
+    const onKey = (e) => {
+      if (e.key === "Escape") { e.preventDefault(); cancelLabel ? cancel() : ok(); }
+      else if (e.key === "Enter" && (hasInput || !cancelLabel)) { e.preventDefault(); ok(); }
+    };
+    overlay.querySelector(".ui-modal-ok").addEventListener("click", ok);
+    const cb = overlay.querySelector(".ui-modal-cancel");
+    if (cb) cb.addEventListener("click", cancel);
+    overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) cancelLabel ? cancel() : ok(); });
+    document.addEventListener("keydown", onKey);
+    if (inputEl) { inputEl.focus(); inputEl.select(); }
+    else overlay.querySelector(".ui-modal-ok").focus();
+  });
+}
+function uiAlert(message, opt = {}) { return uiModal({ title: opt.title || "", message, okLabel: opt.okLabel || "OK" }); }
+function uiConfirm(message, opt = {}) { return uiModal({ title: opt.title || "Potwierdzenie", message, okLabel: opt.okLabel || "Tak", cancelLabel: opt.cancelLabel || "Anuluj", danger: !!opt.danger }); }
+function uiPrompt(message, opt) {
+  const o = typeof opt === "string" ? { value: opt } : (opt || {});
+  return uiModal({ title: o.title || "", message, okLabel: o.okLabel || "OK", cancelLabel: o.cancelLabel || "Anuluj", input: { value: o.value || "", placeholder: o.placeholder || "", type: o.type || "text", inputmode: o.inputmode || "" } });
+}
+
 /* ===================== Administratorzy danych (podmioty na zgodzie) =====================
    Rejestr administratorów danych (RODO). Każda zgoda używa administratora przypisanego
    do projektu, a jeśli projekt go nie ma — administratora domyślnego. */
@@ -540,18 +580,18 @@ function renderList(filter) {
     });
     bar.querySelector(".bulk-send").addEventListener("click", async () => {
       const chosen = selectable.filter(r => S.selected.has(r.id));
-      if (!chosen.length) return alert("Najpierw zaznacz zgody.");
+      if (!chosen.length) return uiAlert("Najpierw zaznacz zgody.");
       for (const r of chosen) { try { await sharePDF(r); } catch {} }
     });
     bar.querySelector(".bulk-dl").addEventListener("click", async () => {
       const chosen = selectable.filter(r => S.selected.has(r.id));
-      if (!chosen.length) return alert("Najpierw zaznacz zgody.");
+      if (!chosen.length) return uiAlert("Najpierw zaznacz zgody.");
       for (const r of chosen) { try { await downloadPDF(r); } catch {} await new Promise(res => setTimeout(res, 400)); }
     });
     const bdel = bar.querySelector(".bulk-del");
     if (bdel) bdel.addEventListener("click", async () => {
       const chosen = selectable.filter(r => S.selected.has(r.id));
-      if (!chosen.length) return alert("Najpierw zaznacz zgody do usunięcia.");
+      if (!chosen.length) return uiAlert("Najpierw zaznacz zgody do usunięcia.");
       await deleteRecords(chosen);
     });
     list.appendChild(bar);
@@ -654,11 +694,11 @@ $("import-file").addEventListener("change", async (e) => {
   if (!file) return;
   try {
     const data = JSON.parse(await file.text());
-    if (!confirm(`Przywrócić kopię z ${new Date(data.exportedAt).toLocaleString("pl-PL")}?\n\nUWAGA: zastąpi WSZYSTKIE obecne dane (${(data.records || []).length} rekordów w kopii). Zalogujesz się PIN-em konta z chwili wykonania kopii.`)) return;
+    if (!await uiConfirm(`Przywrócić kopię z ${new Date(data.exportedAt).toLocaleString("pl-PL")}?\n\nUWAGA: zastąpi WSZYSTKIE obecne dane (${(data.records || []).length} rekordów w kopii). Zalogujesz się PIN-em konta z chwili wykonania kopii.`)) return;
     await applyBackup(data);
-    alert("Kopia przywrócona. Zaloguj się ponownie.");
+    await uiAlert("Kopia przywrócona. Zaloguj się ponownie.");
     location.reload();
-  } catch (ex) { alert("Błąd importu: " + ex.message); }
+  } catch (ex) { uiAlert("Błąd importu: " + ex.message); }
   finally { e.target.value = ""; }
 });
 
@@ -826,9 +866,9 @@ $("btn-fb-restore").addEventListener("click", async () => {
       row.className = "attach-row";
       row.innerHTML = `<div class="attach-info">💾 <b>${esc(d.deviceName)}</b> <span class="tiny muted">${d.updatedAt ? new Date(d.updatedAt).toLocaleString("pl-PL") : ""}${d.deviceId === S.config.deviceId ? " · (to urządzenie)" : ""}</span></div><button class="btn">⬇ Przywróć</button>`;
       row.querySelector("button").addEventListener("click", async () => {
-        if (!confirm(`Przywrócić kopię „${d.deviceName}”?\n\nZastąpi WSZYSTKIE dane na tym urządzeniu.`)) return;
-        try { const data = await fbDownload(d.deviceId); await applyBackup(data.payload); alert("Kopia przywrócona. Zaloguj się ponownie."); location.reload(); }
-        catch (e) { alert("Błąd przywracania: " + e.message); }
+        if (!await uiConfirm(`Przywrócić kopię „${d.deviceName}”?\n\nZastąpi WSZYSTKIE dane na tym urządzeniu.`)) return;
+        try { const data = await fbDownload(d.deviceId); await applyBackup(data.payload); await uiAlert("Kopia przywrócona. Zaloguj się ponownie."); location.reload(); }
+        catch (e) { uiAlert("Błąd przywracania: " + e.message); }
       });
       box.appendChild(row);
     }
@@ -845,9 +885,9 @@ $("btn-fb-restore").addEventListener("click", async () => {
           row.className = "attach-row";
           row.innerHTML = `<div class="attach-info">🕘 <span class="tiny muted">${v.updatedAt ? new Date(v.updatedAt).toLocaleString("pl-PL") : esc(v.id)}</span></div><button class="btn">⬇ Przywróć</button>`;
           row.querySelector("button").addEventListener("click", async () => {
-            if (!confirm(`Przywrócić kopię z ${v.updatedAt ? new Date(v.updatedAt).toLocaleString("pl-PL") : v.id}?\n\nZastąpi WSZYSTKIE dane na tym urządzeniu.`)) return;
-            try { const data = await fbDownloadHistory(v.id); await applyBackup(data.payload); alert("Kopia przywrócona. Zaloguj się ponownie."); location.reload(); }
-            catch (e) { alert("Błąd przywracania: " + e.message); }
+            if (!await uiConfirm(`Przywrócić kopię z ${v.updatedAt ? new Date(v.updatedAt).toLocaleString("pl-PL") : v.id}?\n\nZastąpi WSZYSTKIE dane na tym urządzeniu.`)) return;
+            try { const data = await fbDownloadHistory(v.id); await applyBackup(data.payload); await uiAlert("Kopia przywrócona. Zaloguj się ponownie."); location.reload(); }
+            catch (e) { uiAlert("Błąd przywracania: " + e.message); }
           });
           box.appendChild(row);
         }
@@ -865,7 +905,7 @@ function updateSyncBadge(msg) {
 }
 async function syncPush(manual) {
   const fb = fbCfg(), c = syncCfg();
-  if (!fb && (!c.url || !c.key)) { if (manual) alert("Skonfiguruj chmurę (Firebase) w ustawieniach."); return false; }
+  if (!fb && (!c.url || !c.key)) { if (manual) uiAlert("Skonfiguruj chmurę (Firebase) w ustawieniach."); return false; }
   if (!navigator.onLine) { updateSyncBadge("offline — wyśle po połączeniu"); return false; }
   try {
     updateSyncBadge("wysyłanie…");
@@ -925,12 +965,12 @@ $("btn-sync-restore").addEventListener("click", async () => {
       row.className = "attach-row";
       row.innerHTML = `<div class="attach-info">💾 <b>${esc(d.deviceName || d.deviceId)}</b> <span class="tiny muted">ostatnia kopia: ${new Date(d.updatedAt).toLocaleString("pl-PL")}${d.deviceId === S.config.deviceId ? " · (to urządzenie)" : ""}</span></div><button class="btn">⬇ Przywróć</button>`;
       row.querySelector("button").addEventListener("click", async () => {
-        if (!confirm(`Przywrócić kopię „${d.deviceName}” z ${new Date(d.updatedAt).toLocaleString("pl-PL")}?\n\nZastąpi WSZYSTKIE dane na tym urządzeniu.`)) return;
+        if (!await uiConfirm(`Przywrócić kopię „${d.deviceName}” z ${new Date(d.updatedAt).toLocaleString("pl-PL")}?\n\nZastąpi WSZYSTKIE dane na tym urządzeniu.`)) return;
         const r2 = await fetch(c.url.replace(/\/+$/, "") + "/api/sync?device=" + encodeURIComponent(d.deviceId), { headers: { "X-Sync-Key": c.key } });
         const data = await r2.json();
-        if (!r2.ok) { alert("Błąd: " + (data.error || r2.status)); return; }
+        if (!r2.ok) { uiAlert("Błąd: " + (data.error || r2.status)); return; }
         await applyBackup(data.payload);
-        alert("Kopia przywrócona. Zaloguj się ponownie.");
+        await uiAlert("Kopia przywrócona. Zaloguj się ponownie.");
         location.reload();
       });
       box.appendChild(row);
@@ -954,7 +994,7 @@ async function addFileToProject(proj, file) {
 }
 async function openFile(fileMeta) {
   const row = await storeGet("files", fileMeta.id);
-  if (!row) { alert("Nie znaleziono pliku w magazynie."); return; }
+  if (!row) { uiAlert("Nie znaleziono pliku w magazynie."); return; }
   const buf = await decryptBytes(S.key, row.pack);
   const url = URL.createObjectURL(new Blob([buf], { type: "application/pdf" }));
   window.open(url, "_blank");
@@ -1326,7 +1366,7 @@ async function serverEmail(r) {
   } catch { return false; }
 }
 async function sharePDF(r) {
-  if (await serverEmail(r)) { alert("Kopia wysłana e-mailem przez serwer do: " + r.person.email); return; }
+  if (await serverEmail(r)) { uiAlert("Kopia wysłana e-mailem przez serwer do: " + r.person.email); return; }
   const bytes = await buildPDF(r);
   const fname = `zgoda-${r.person.last}-${r.person.first}-${r.createdAt.slice(0, 10)}.pdf`.toLowerCase().replace(/\s+/g, "-");
   const file = new File([bytes], fname, { type: "application/pdf" });
@@ -1482,8 +1522,8 @@ async function deleteRecords(recs) {
   } else {
     msg = `${head}\n\n⚠ Chmura jest wyłączona — kopia NIE powstanie, więc usunięcie będzie NIEODWRACALNE.\n\nNa pewno usunąć?`;
   }
-  if (!confirm(msg)) return;
-  if (cloud) { const ok = await snapshotNow(); if (!ok && !confirm("Nie udało się zapisać kopii w chmurze. Usunąć mimo to — NIEODWRACALNIE?")) return; }
+  if (!await uiConfirm(msg)) return;
+  if (cloud) { const ok = await snapshotNow(); if (!ok && !await uiConfirm("Nie udało się zapisać kopii w chmurze. Usunąć mimo to — NIEODWRACALNIE?")) return; }
   for (const r of recs) { await tx("records", "readwrite", s => s.delete(r.id)); try { await tx("outbox", "readwrite", s => s.delete(r.id)); } catch {} }
   const ids = new Set(recs.map(r => r.id));
   S.records = S.records.filter(x => !ids.has(x.id));
@@ -1538,18 +1578,18 @@ function openProjectDelete(p) {
     let targetId = tgt.value, targetName;
     if (targetId === "__new__") {
       const nm = ov.querySelector("#pd-newname").value.trim();
-      if (!nm) { alert("Podaj nazwę nowego projektu roboczego."); return; }
+      if (!nm) { uiAlert("Podaj nazwę nowego projektu roboczego."); return; }
       targetId = uuid(); targetName = nm;
       S.vault.projects.push({ id: targetId, name: nm, customText: "", files: [], allowedUserIds: [], requirePhoto: false });
     } else { const t = others.find(o => o.id === targetId); targetName = t ? t.name : ""; }
     moveBtn.disabled = true; moveBtn.textContent = "Przenoszę…";
-    if (cloud) { const ok = await snapshotNow(); if (!ok && !confirm("Nie udało się zapisać kopii w chmurze. Kontynuować mimo to?")) { moveBtn.disabled = false; moveBtn.textContent = "Przenieś zgody i usuń projekt"; return; } }
+    if (cloud) { const ok = await snapshotNow(); if (!ok && !await uiConfirm("Nie udało się zapisać kopii w chmurze. Kontynuować mimo to?")) { moveBtn.disabled = false; moveBtn.textContent = "Przenieś zgody i usuń projekt"; return; } }
     await moveRecordsToProject(recs, targetId, targetName);
     await removeProject();
     await rebuildChain();
     await loadRecords();
     close(); scheduleSync(); enterSettings();
-    alert(`Przeniesiono ${recs.length} ${recs.length === 1 ? "zgodę" : "zgód"} do „${targetName}” i usunięto projekt.`);
+    uiAlert(`Przeniesiono ${recs.length} ${recs.length === 1 ? "zgodę" : "zgód"} do „${targetName}” i usunięto projekt.`);
   });
   const delEmpty = ov.querySelector("#pd-delempty");
   if (delEmpty) delEmpty.addEventListener("click", async () => {
@@ -1560,7 +1600,7 @@ function openProjectDelete(p) {
 }
 
 async function revokeRodo(r) {
-  if (!confirm(`Odnotować cofnięcie zgody RODO przez ${r.person.first} ${r.person.last}?\n\nCofnięcie działa na przyszłość — nie unieważnia zezwolenia art. 81 dla już wyprodukowanego materiału. Dokument pozostaje w archiwum jako dowód.`)) return;
+  if (!await uiConfirm(`Odnotować cofnięcie zgody RODO przez ${r.person.first} ${r.person.last}?\n\nCofnięcie działa na przyszłość — nie unieważnia zezwolenia art. 81 dla już wyprodukowanego materiału. Dokument pozostaje w archiwum jako dowód.`)) return;
   r.status = "revoked-rodo";
   r.revocations.push({ ts: new Date().toISOString(), type: "rodo", note: "cofnięcie odnotowane przez: " + S.user.name });
   r.audit.push({ ts: new Date().toISOString(), type: "cofnięcie", detail: "odnotowano cofnięcie zgody RODO (skutek na przyszłość)" });
@@ -1638,7 +1678,7 @@ function renderAdmins() {
     if (defBtn) defBtn.addEventListener("click", async () => { S.vault.defaultAdminId = a.id; normalizeVault(S.vault); await saveVault(); renderAdmins(); });
     const delBtn = card.querySelector("[data-act=del]");
     if (delBtn) delBtn.addEventListener("click", async () => {
-      if (!confirm(`Usunąć administratora „${a.name}”? Projekty, które go używały, wrócą do domyślnego.`)) return;
+      if (!await uiConfirm(`Usunąć administratora „${a.name}”? Projekty, które go używały, wrócą do domyślnego.`)) return;
       S.vault.admins = S.vault.admins.filter(x => x.id !== a.id);
       S.vault.projects.forEach(p => { if (p.adminId === a.id) p.adminId = null; });
       normalizeVault(S.vault); await saveVault(); renderAdmins();
@@ -1678,7 +1718,7 @@ $("btn-mail-test").addEventListener("click", async () => {
   const smtp = smtpFromFields();
   if (!smtp) { st.textContent = "🛑 Uzupełnij adres e-mail i hasło nadawcy, potem spróbuj ponownie."; return; }
   if (!navigator.onLine) { st.textContent = "🛑 Brak internetu — test wymaga połączenia."; return; }
-  const to = (prompt("Na jaki adres wysłać próbny e-mail?", $("mail-email").value.trim()) || "").trim();
+  const to = (await uiPrompt("Na jaki adres wysłać próbny e-mail?", $("mail-email").value.trim()) || "").trim();
   if (!to) { st.textContent = "Anulowano test."; return; }
   if (!isValidEmail(to)) { st.textContent = "🛑 Ten adres wygląda niepoprawnie: " + to; return; }
   st.textContent = "Wysyłam próbną wiadomość…";
@@ -1736,12 +1776,12 @@ function renderProjects() {
     const adminSel = card.querySelector(".proj-admin");
     adminSel.addEventListener("change", async (e) => {
       if (e.target.value === "__new") {
-        const name = (prompt("Nazwa nowego administratora danych:") || "").trim();
+        const name = (await uiPrompt("Nazwa nowego administratora danych:") || "").trim();
         if (!name) { e.target.value = p.adminId || ""; return; }
         const na = { id: uuid(), name, address: "", taxId: "", email: "" };
         S.vault.admins.push(na); p.adminId = na.id;
         await saveVault(); renderProjects(); renderAdmins();
-        alert(`Dodano administratora „${name}". Uzupełnij jego adres / NIP / e-mail w sekcji „Administrator danych" powyżej.`);
+        uiAlert(`Dodano administratora „${name}". Uzupełnij jego adres / NIP / e-mail w sekcji „Administrator danych" powyżej.`);
         return;
       }
       p.adminId = e.target.value || null;
@@ -1775,7 +1815,7 @@ function renderProjects() {
       filesBox.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => openFile(p.files[+b.dataset.open])));
       filesBox.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", async () => {
         const f = p.files[+b.dataset.rm];
-        if (!confirm(`Usunąć plik „${f.name}” z projektu? Już podpisane zgody zachowują jego nazwę i hash.`)) return;
+        if (!await uiConfirm(`Usunąć plik „${f.name}” z projektu? Już podpisane zgody zachowują jego nazwę i hash.`)) return;
         p.files.splice(+b.dataset.rm, 1);
         await saveVault(); renderFiles();
       }));
@@ -1787,14 +1827,14 @@ function renderProjects() {
       const f = e.target.files[0]; e.target.value = "";
       if (!f) return;
       try { await addFileToProject(p, f); renderFiles(); }
-      catch (ex) { alert(ex.message); }
+      catch (ex) { uiAlert(ex.message); }
     });
     card.querySelector("[data-act=savetext]").addEventListener("click", async () => {
       const newName = card.querySelector(".proj-name").value.trim();
       if (newName) p.name = newName;
       p.customText = card.querySelector("textarea").value;
       await saveVault();
-      alert("Zapisano.");
+      uiAlert("Zapisano.");
       renderProjects();
     });
     const del = card.querySelector("[data-act=del]");
@@ -1804,7 +1844,7 @@ function renderProjects() {
 }
 $("btn-add-project").addEventListener("click", async () => {
   const name = $("new-project-name").value.trim();
-  if (!name) { alert("Podaj nazwę projektu."); return; }
+  if (!name) { uiAlert("Podaj nazwę projektu."); return; }
   S.vault.projects.push({ id: uuid(), name, customText: "", files: [], allowedUserIds: [], requirePhoto: false });
   $("new-project-name").value = "";
   await saveVault(); renderProjects();
@@ -1836,23 +1876,23 @@ function renderAccounts() {
     });
     row.querySelector("[data-act=confirm]").addEventListener("click", async () => {
       const pin = row.querySelector(".reset-pin").value;
-      if (!PIN_RE.test(pin)) { alert("PIN: min. 6 cyfr."); return; }
+      if (!PIN_RE.test(pin)) { uiAlert("PIN: min. 6 cyfr."); return; }
       const { salt, wrap } = await wrapDEKForPin(pin);
       acc.salt = salt; acc.wrap = wrap; acc.fails = 0; acc.lockUntil = 0;
       await saveConfig(); scheduleSync();
-      alert(`Nowy PIN dla „${acc.name}” ustawiony.`);
+      uiAlert(`Nowy PIN dla „${acc.name}” ustawiony.`);
       renderAccounts();
     });
     const tg = row.querySelector("[data-act=toggle]");
     if (tg) tg.addEventListener("click", async () => {
-      if (acc.role === "admin" && acc.active && S.config.accounts.filter(a => a.active && a.role === "admin").length <= 1) { alert("Musi pozostać co najmniej jeden aktywny administrator."); return; }
+      if (acc.role === "admin" && acc.active && S.config.accounts.filter(a => a.active && a.role === "admin").length <= 1) { uiAlert("Musi pozostać co najmniej jeden aktywny administrator."); return; }
       acc.active = !acc.active;
       await saveConfig(); scheduleSync(); renderAccounts();
     });
     const dl = row.querySelector("[data-act=del]");
     if (dl) dl.addEventListener("click", async () => {
-      if (acc.role === "admin" && S.config.accounts.filter(a => a.active && a.role === "admin").length <= 1) { alert("Musi pozostać co najmniej jeden aktywny administrator."); return; }
-      if (!confirm(`Usunąć konto „${acc.name}”? Zebrane przez nie zgody pozostają w archiwum.`)) return;
+      if (acc.role === "admin" && S.config.accounts.filter(a => a.active && a.role === "admin").length <= 1) { uiAlert("Musi pozostać co najmniej jeden aktywny administrator."); return; }
+      if (!await uiConfirm(`Usunąć konto „${acc.name}”? Zebrane przez nie zgody pozostają w archiwum.`)) return;
       S.config.accounts = S.config.accounts.filter(a => a.id !== acc.id);
       await saveConfig(); scheduleSync(); renderAccounts();
     });
@@ -1885,7 +1925,7 @@ $("btn-change-pin").addEventListener("click", async () => {
   S.user.salt = salt; S.user.wrap = wrap; S.user.fails = 0; S.user.lockUntil = 0;
   await saveConfig(); scheduleSync();
   $("pin-new").value = $("pin-new2").value = "";
-  alert("Twój PIN został zmieniony.");
+  uiAlert("Twój PIN został zmieniony.");
 });
 
 /* --- kolejka + pamięć --- */
