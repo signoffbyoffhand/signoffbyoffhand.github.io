@@ -109,7 +109,8 @@ a { color: var(--accent); }
 .wordmark.sm .nm { font-size: 1.12rem; }
 .wordmark.sm .by { font-size: .48rem; letter-spacing: .2em; }
 .topbar-brand { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.brand-mark-lead { height: 30px; width: auto; flex: 0 0 auto; }
+.topbar-brand .wordmark { align-items: flex-end; }
+.brand-mark-lead { height: 46px; width: auto; flex: 0 0 auto; }
 .brand-mark-corner { height: 26px; width: auto; flex: 0 0 auto; opacity: .92; }
 .lock-mark { display: flex; justify-content: center; margin: 24px 0 8px; }
 .lock-mark img { height: 74px; width: auto; opacity: .92; }
