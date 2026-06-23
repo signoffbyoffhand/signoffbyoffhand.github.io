@@ -375,15 +375,6 @@
       </div>
     </details>
 
-    <details class="set-group admin-only" id="grp-loginlog">
-      <summary class="set-group-head"><span class="sg-ic">🕘</span><span class="sg-meta"><b>Rejestr logowań</b><span>Kto, kiedy i gdzie logował się do aplikacji</span></span><span class="sg-chev">›</span></summary>
-      <div class="set-group-body">
-      <p class="tiny muted">Każde logowanie (oraz odzyskiwanie kodem) jest zapisywane: konto, data/godzina, urządzenie i — jeśli pozwolono na lokalizację — miejsce. Widoczne dla administratora i supportu. Zapisywane w zaszyfrowanej kopii (E2E).</p>
-      <div id="loginlog-list"></div>
-      <div class="wnav-mini"><button class="btn danger" id="btn-loginlog-clear">🗑 Wyczyść rejestr</button></div>
-      </div>
-    </details>
-
     <details class="set-group" id="grp-cloud">
       <summary class="set-group-head"><span class="sg-ic">☁</span><span class="sg-meta"><b>Kopia w chmurze i synchronizacja</b><span>Backup E2E (Firebase) oraz alternatywny własny serwer</span></span><span class="sg-chev">›</span></summary>
       <div class="set-group-body">
@@ -482,6 +473,12 @@
         <li>🧾 Kwalifikowany znacznik czasu (eIDAS): <span class="badge planned">do integracji z API TSP</span></li>
       </ul>
       <p class="tiny muted">Wersja produkcyjna-kandydat. Przed startem: weryfikacja klauzul przez prawnika; zalecana integracja znacznika czasu eIDAS.</p>
+      <details class="adv admin-only" id="grp-loginlog">
+        <summary class="tiny muted">🕘 Rejestr logowań (kto, kiedy, gdzie)</summary>
+        <p class="tiny muted">Każde logowanie (oraz odzyskiwanie kodem) jest zapisywane: konto, data/godzina, urządzenie i — jeśli pozwolono na lokalizację — miejsce. Zapisywane w zaszyfrowanej kopii (E2E).</p>
+        <div id="loginlog-list"></div>
+        <div class="wnav-mini"><button class="btn danger" id="btn-loginlog-clear">🗑 Wyczyść rejestr</button></div>
+      </details>
       </div>
     </details>
     </div>
