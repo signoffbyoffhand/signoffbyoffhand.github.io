@@ -615,12 +615,15 @@ async function recordLogin(acc, kind) {
 }
 /* Skuteczne ustalenie miejsca: 1) GPS, 2) przybliżone z adresu IP (miasto/kraj), 3) ostatnia znana. */
 async function resolveLoginLocation(entry) {
-  // 1. GPS (dokładny) — bierze najlepszy odczyt w oknie ~10 s
-  const gps = await getBestPosition(10000);
-  if (gps) { entry.geo = { ...gps, source: "gps" }; await saveVault(); return; }
-  // zaznacz, jeśli zgoda na lokalizację jest zablokowana (żeby było jasne, czemu jest tylko IP)
-  if (await geoPermissionState() === "denied") { entry.geoBlocked = true; await saveVault(); }
-  // 2. Przybliżone z IP (miasto/kraj) — gdy GPS niedostępny/odmówiony
+  // 1. GPS — TYLKO gdy zgoda już udzielona. Przy logowaniu NIE pytamy (pytanie pada przy 1. zgodzie).
+  const st = await geoPermissionState();
+  if (st === "granted") {
+    const gps = await getBestPosition(10000);
+    if (gps) { entry.geo = { ...gps, source: "gps" }; await saveVault(); return; }
+  } else if (st === "denied") {
+    entry.geoBlocked = true; await saveVault();
+  }
+  // 2. Przybliżone z IP (miasto/kraj) — bez żadnego pytania
   if (navigator.onLine) {
     try {
       const r = await fetch("https://ipapi.co/json/");
