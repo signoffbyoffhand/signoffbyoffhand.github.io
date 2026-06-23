@@ -567,20 +567,26 @@ async function login() {
 async function recordLogin(acc, kind) {
   if (!S.vault) return;
   if (!Array.isArray(S.vault.loginLog)) S.vault.loginLog = [];
+  // ostatnia znana lokalizacja na tym urządzeniu — gdy świeżej nie uda się pobrać, wpis nie będzie pusty
+  let lastGeo = null;
+  for (let i = S.vault.loginLog.length - 1; i >= 0; i--) {
+    const g = S.vault.loginLog[i].geo;
+    if (g && g.lat != null) { lastGeo = { lat: g.lat, lon: g.lon, acc: g.acc, approx: true }; break; }
+  }
   const entry = {
     at: new Date().toISOString(), userId: acc.id, name: acc.name, role: acc.role,
     kind: kind || "logowanie",
     device: (S.config && S.config.deviceName) || (navigator.platform || "urządzenie"),
-    geo: null,
+    geo: lastGeo,
   };
   S.vault.loginLog.push(entry);
   if (S.vault.loginLog.length > 300) S.vault.loginLog = S.vault.loginLog.slice(-300);
   await saveVault();
-  // lokalizacja „gdzie" — best-effort, nie blokuje logowania (używa świeżej pozycji, jeśli jest)
+  // świeża lokalizacja (jeśli się uda) zastąpi „ostatnią znaną"; nie blokuje logowania
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => { entry.geo = { lat: +pos.coords.latitude.toFixed(4), lon: +pos.coords.longitude.toFixed(4), acc: Math.round(pos.coords.accuracy) }; saveVault(); },
-      () => {}, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
+      () => {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
   }
 }
 function renderLoginLog() {
@@ -589,7 +595,7 @@ function renderLoginLog() {
   if (!log.length) { box.innerHTML = '<p class="tiny muted">Brak zapisanych logowań.</p>'; return; }
   box.innerHTML = log.map(e => {
     const where = e.geo
-      ? `📍 <a href="https://maps.google.com/?q=${e.geo.lat},${e.geo.lon}" target="_blank" rel="noopener">${e.geo.lat}, ${e.geo.lon}</a> (±${e.geo.acc} m)`
+      ? `📍 ${e.geo.approx ? "≈ " : ""}<a href="https://maps.google.com/?q=${e.geo.lat},${e.geo.lon}" target="_blank" rel="noopener">${e.geo.lat}, ${e.geo.lon}</a> (${e.geo.approx ? "ostatnia znana" : "±" + e.geo.acc + " m"})`
       : "📍 brak lokalizacji";
     return `<div class="attach-row"><div class="attach-info"><b>${esc(e.name || "")}</b> <span class="tiny muted">${roleLabel(e.role)}${e.kind && e.kind !== "logowanie" ? " · " + esc(e.kind) : ""}</span><br>
       <span class="tiny muted">🕘 ${new Date(e.at).toLocaleString("pl-PL")} · 📱 ${esc(e.device || "")}<br>${where}</span></div></div>`;
