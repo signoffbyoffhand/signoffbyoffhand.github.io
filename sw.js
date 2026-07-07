@@ -1,7 +1,7 @@
 /* SignOff service worker — pełny offline + bezpieczna automatyczna aktualizacja.
    Nowa wersja pobiera się w tle (gdy online), ale aktywuje się dopiero gdy użytkownik
    dotknie „Odśwież" albo przy następnym otwarciu aplikacji — nigdy w trakcie zgody. */
-const CACHE = "signoff-v83";
+const CACHE = "signoff-v84";
 const ASSETS = [
   "./", "index.html", "style.css", "app.js", "manifest.json",
   "icons/icon-192.png", "icons/icon-512.png", "icons/offhand-logo.svg", "icons/offhand-mark-cream.png",
@@ -22,18 +22,18 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("message", (e) => {
   if (e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
 });
-/* network-first: świeża wersja gdy online, pełny offline z cache gdy brak sieci.
+/* cache-first: natychmiastowe ładowanie z pamięci (szybko, pełny offline).
+   Świeżość zapewnia wersjonowanie SW (bump CACHE + pasek „Odśwież”), więc nie czekamy na sieć.
    API synchronizacji i żądania inne niż GET idą zawsze prosto do sieci. */
 self.addEventListener("fetch", (e) => {
   const u = new URL(e.request.url);
   if (e.request.method !== "GET" || u.origin !== location.origin || u.pathname.startsWith("/api/")) return;
   e.respondWith(
-    fetch(e.request).then(resp => {
-      if (resp.ok && e.request.method === "GET" && new URL(e.request.url).origin === location.origin) {
-        const copy = resp.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
-      }
-      return resp;
-    }).catch(() => caches.match(e.request, { ignoreSearch: true }))
+    caches.match(e.request, { ignoreSearch: true }).then(cached =>
+      cached || fetch(e.request).then(resp => {
+        if (resp.ok) { const copy = resp.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+        return resp;
+      }).catch(() => cached)
+    )
   );
 });
