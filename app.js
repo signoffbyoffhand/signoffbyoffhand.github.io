@@ -263,7 +263,7 @@ function adminLine(a) {
 }
 
 /* ===================== Szablon zgody ===================== */
-const TEMPLATE_VERSION = "3.0-PL";
+const TEMPLATE_VERSION = "3.1-PL";
 function defaultClause(cfg, proj, p) {
   const who = p.isMinor
     ? `Ja, ${p.gfirst} ${p.glast}, działając jako rodzic/opiekun prawny małoletniego(-iej) ${p.first} ${p.last},`
@@ -285,7 +285,7 @@ function rodoClause(cfg) {
 3. Dane mogą być przekazywane koproducentom, dystrybutorom, ubezpieczycielom i platformom emisyjnym — wyłącznie w zakresie niezbędnym do eksploatacji projektu.
 4. Dane będą przechowywane przez okres eksploatacji projektu, a dokument zgody — dodatkowo przez okres przedawnienia roszczeń.
 5. Przysługuje Pani/Panu prawo dostępu do danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, sprzeciwu oraz skargi do Prezesa UODO.
-6. Zgodę na przetwarzanie danych można cofnąć w każdej chwili ze skutkiem na przyszłość — nie wpływa to na zgodność z prawem przetwarzania dokonanego przed cofnięciem ani na nabyte zgodnie z prawem zezwolenie na rozpowszechnianie wizerunku w już wyprodukowanym materiale (art. 81 pr. aut. stanowi odrębną podstawę).
+6. Każdą z wyrażonych zgód — w tym zgodę dodatkową na przesyłanie informacji o przyszłych projektach i ofert współpracy — można cofnąć w każdej chwili, niezależnie od pozostałych, ze skutkiem na przyszłość. Cofnięcie nie wpływa na zgodność z prawem przetwarzania dokonanego przed cofnięciem ani na nabyte zgodnie z prawem zezwolenie na rozpowszechnianie wizerunku w już wyprodukowanym materiale (art. 81 pr. aut. stanowi odrębną podstawę).
 7. Podanie danych jest dobrowolne, lecz niezbędne do udziału w projekcie.
 
 INFORMACJA O PODPISIE ELEKTRONICZNYM
@@ -1547,7 +1547,18 @@ function validateStep(n) {
     return true;
   }
   if (n === 2) {
-    if (!$("c-image").checked || !$("c-rodo").checked) { err.textContent = "Obowiązkowe zgody (✱ art. 81 i RODO) muszą być zaznaczone."; err.hidden = false; return false; }
+    // obowiązkowe zgody: zamiast czerwonego napisu — podświetlamy niezaznaczone na czerwono
+    let missingConsent = false;
+    ["c-image", "c-rodo"].forEach(id => {
+      const cb = $(id), label = cb.closest(".big-check");
+      if (!cb.checked) { if (label) label.classList.add("consent-missing"); missingConsent = true; }
+      else if (label) label.classList.remove("consent-missing");
+    });
+    if (missingConsent) {
+      const first = document.querySelector("#consent-checks .big-check.consent-missing");
+      if (first) first.scrollIntoView({ block: "center", behavior: "smooth" });
+      return false;
+    }
     const proj = activeProject();
     for (const it of projectDocs(proj)) {
       if (it.required !== false && !S.wizard.attachChecks[it.fileId]) { err.textContent = `Zaznacz akceptację obowiązkowego dokumentu: ${it.fileName || it.name}.`; err.hidden = false; return false; }
@@ -1581,9 +1592,17 @@ function prepareConsentStep() {
   S.wizard.templateText = consentText(S.vault, proj, S.wizard.person);
   box.textContent = S.wizard.templateText;
   box.scrollTop = 0;
+  // gradient na dole znika po dojechaniu do końca (i gdy treść mieści się bez przewijania),
+  // żeby ostatnie linijki dokumentu były w pełni czytelne
+  const updateConsentFade = () => {
+    const atEnd = box.scrollHeight - box.clientHeight - box.scrollTop < 8;
+    box.classList.toggle("at-end", atEnd);
+  };
+  box.onscroll = updateConsentFade;
+  setTimeout(updateConsentFade, 0);
   auditEvent(S.wizard, "treść", `wyświetlono treść zgody (szablon ${TEMPLATE_VERSION}${proj.customText ? ", treść własna projektu" : ""})`);
   // zgody dostępne od razu — bez wymuszania przewijania
-  ["c-image", "c-rodo", "c-marketing"].forEach(id => { $(id).disabled = false; });
+  ["c-image", "c-rodo", "c-marketing"].forEach(id => { const cb = $(id); cb.disabled = false; const lbl = cb.closest(".big-check"); if (lbl) lbl.classList.remove("consent-missing"); });
   $("c-image").required = true; $("c-rodo").required = true; $("c-marketing").required = false;
   // dokumenty projektu (regulaminy/umowy)
   const ab = $("attach-box");
@@ -1605,7 +1624,11 @@ function prepareConsentStep() {
     ab.appendChild(row);
   }
   ["c-image", "c-rodo", "c-marketing"].forEach(id => {
-    $(id).onchange = (e) => auditEvent(S.wizard, "checkbox", `${id}: ${e.target.checked ? "zaznaczono" : "odznaczono"}`);
+    $(id).onchange = (e) => {
+      auditEvent(S.wizard, "checkbox", `${id}: ${e.target.checked ? "zaznaczono" : "odznaczono"}`);
+      const lbl = e.target.closest(".big-check");
+      if (lbl && e.target.checked) lbl.classList.remove("consent-missing");
+    };
   });
 }
 
@@ -1758,7 +1781,7 @@ function renderSummary() {
     <tr><td>Rola / scena</td><td>${esc(p.role) || "—"}</td></tr>
     <tr><td>Zezwolenie art. 81 (wizerunek)</td><td>✅ udzielone</td></tr>
     <tr><td>Zgoda RODO</td><td>✅ udzielona</td></tr>
-    <tr><td>Zgoda marketingowa</td><td>${w.consents.marketing ? "✅ udzielona" : "— nieudzielona"}</td></tr>
+    <tr><td>Zgoda na kontakt (przyszłe projekty / współpraca)</td><td>${w.consents.marketing ? "✅ udzielona" : "— nieudzielona"}</td></tr>
     ${(w.attachments || []).length ? `<tr><td>Zaakceptowane dokumenty</td><td>${w.attachments.map(a => "📎 " + esc(a.name)).join("<br>")}</td></tr>` : ""}
     <tr><td>Podpis</td><td><img class="thumb" src="${w.signature}" alt="podpis"></td></tr>
     <tr><td>Zdjęcie</td><td>${w.photo ? `<img class="thumb" src="${w.photo}" alt="zdjęcie">` : "— pominięto"}</td></tr>
@@ -1916,7 +1939,7 @@ function showDetail(id) {
       <p>Data: <b>${new Date(r.createdAt).toLocaleString("pl-PL")}</b> · Projekt: ${esc(r.projectName || "—")}${r.operator ? " · Zebrał(a): " + esc(r.operator) : ""}<br>
       Status RODO: ${r.status === "active" ? '<span class="badge ok">aktywna</span>' : '<span class="badge revoked">cofnięta ' + new Date(r.revocations[0]?.ts).toLocaleDateString("pl-PL") + "</span>"} ·
       Zezwolenie art. 81: <span class="badge ok">udzielone</span> ·
-      Marketing: ${r.consents.marketing ? '<span class="badge ok">tak</span>' : '<span class="badge planned">nie</span>'}</p>
+      Przyszłe projekty / współpraca: ${r.consents.marketing ? '<span class="badge ok">tak</span>' : '<span class="badge planned">nie</span>'}</p>
       ${attach ? `<p><b>Zaakceptowane dokumenty:</b></p><ul>${attach}</ul>` : ""}
       <p>Podpis:<br><img class="sig" src="${r.signature}" alt="podpis"></p>
       ${r.photo ? `<p>Zdjęcie podpisującego:<br><img class="photo" src="${r.photo}" alt="zdjęcie"></p>` : ""}
@@ -2651,7 +2674,7 @@ async function buildPDF(r) {
   text("WYRAŻONE ZGODY", { bold: true, size: 10.5, gap: 5 });
   text("[X] Zezwolenie na rozpowszechnianie wizerunku (art. 81 pr. aut.) — UDZIELONE", { size: 9.5 });
   text("[X] Zgoda na przetwarzanie danych osobowych (art. 6 ust. 1 lit. a RODO) — UDZIELONA", { size: 9.5 });
-  text(`[${r.consents.marketing ? "X" : "  "}] Zgoda dodatkowa (marketing/promocja) — ${r.consents.marketing ? "UDZIELONA" : "NIEUDZIELONA"}`, { size: 9.5, gap: 6 });
+  text(`[${r.consents.marketing ? "X" : "  "}] Zgoda dodatkowa (informacje o przyszłych projektach i oferty współpracy) — ${r.consents.marketing ? "UDZIELONA" : "NIEUDZIELONA"}`, { size: 9.5, gap: 6 });
   if ((r.attachments || []).length) {
     text("ZAAKCEPTOWANE DOKUMENTY ZAŁĄCZONE (pełna treść na końcu pliku):", { bold: true, size: 9.5, gap: 4 });
     for (const a of r.attachments) text(`[X] ${a.name}  ·  SHA-256: ${a.hash}`, { size: 7.5, gap: 2.5 });
