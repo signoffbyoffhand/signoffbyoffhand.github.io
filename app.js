@@ -496,7 +496,9 @@ function renderUpdateBanner() {
   document.body.appendChild(bar);
   $("btn-update").addEventListener("click", () => {
     $("btn-update").textContent = "Aktualizuję…";
-    pendingUpdateWorker.postMessage({ type: "SKIP_WAITING" });
+    try { pendingUpdateWorker.postMessage({ type: "SKIP_WAITING" }); } catch (e) {}
+    // Siatka bezpieczeństwa: controllerchange bywa niewywoływany (m.in. iOS) — przeładuj ręcznie.
+    setTimeout(() => location.reload(), 2000);
   });
 }
 
