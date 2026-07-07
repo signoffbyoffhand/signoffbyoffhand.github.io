@@ -520,9 +520,9 @@ function updateNetBadge() {
   b.className = "badge " + (navigator.onLine ? "online" : "offline");
 }
 function resetLockTimer() {
-  if (!S.key) return;
+  // Auto-wylogowanie po bezczynności WYŁĄCZONE — zalogowany zostaje do ręcznego wylogowania
+  // (przycisk „drzwi” w pasku). Czyścimy tylko ewentualny stary licznik.
   clearTimeout(S.lockTimer);
-  S.lockTimer = setTimeout(lock, 5 * 60 * 1000);
 }
 function lock() {
   S.key = null; S.dekRaw = null; S.vault = null; S.records = []; S.wizard = null; S.user = null;

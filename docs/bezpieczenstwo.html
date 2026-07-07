@@ -28,7 +28,7 @@
   <ul>
     <li>Dane chroni losowy <b>klucz główny</b> (AES-256). PIN nie jest tym kluczem — tylko go „opakowuje" przez <b>PBKDF2 (310 000 przeliczeń)</b>.</li>
     <li><b>PIN nie jest nigdzie zapisywany w czytelnej postaci</b> — ani na urządzeniu, ani w chmurze. Zapomnianego PIN-u nie da się odczytać; resetuje się go <b>kodem odzyskiwania</b> (wysyłanym mailem przy zakładaniu konta) albo przez administratora.</li>
-    <li>Po 5 błędnych próbach konto blokuje się na rosnący czas; auto-wylogowanie po 5 min bezczynności.</li>
+    <li>Po 5 błędnych próbach konto blokuje się na rosnący czas; wylogowanie ręczne (przyciskiem w pasku).</li>
   </ul>
 
   <h2>3. Integralność (wykrywanie manipulacji)</h2>
