@@ -112,7 +112,7 @@ const S = {
 };
 const $ = (id) => document.getElementById(id);
 const views = ["view-lock", "view-home", "view-wizard", "view-detail", "view-settings"];
-function show(view) { views.forEach(v => $(v).hidden = v !== view); window.scrollTo(0, 0); }
+function show(view) { views.forEach(v => $(v).hidden = v !== view); window.scrollTo(0, 0); renderUpdateBanner(); }
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const isAdmin = () => S.user && (S.user.role === "admin" || S.user.role === "support");
 const roleLabel = (r) => r === "admin" ? "Administrator" : r === "support" ? "Support" : r === "inne" ? "Inne" : "Pracownik";
@@ -263,7 +263,7 @@ function adminLine(a) {
 }
 
 /* ===================== Szablon zgody ===================== */
-const TEMPLATE_VERSION = "4.8-PL";
+const TEMPLATE_VERSION = "4.9-PL";
 function defaultClause(cfg, proj, p) {
   const who = p.isMinor
     ? `Ja, ${p.gfirst} ${p.glast}, działając jako rodzic/opiekun prawny małoletniego(-iej) ${p.first} ${p.last},`
@@ -307,10 +307,10 @@ function rodoClause(cfg) {
 
 1. Administratorem danych osobowych (w tym wizerunku, głosu, imienia i nazwiska oraz podanych danych kontaktowych) jest ${cfg._admin ? adminLine(cfg._admin) : cfg.producer}.${cfg._admin && cfg._admin.email ? `\n   Kontakt w sprawie ochrony danych i realizacji praw: ${cfg._admin.email}.` : ""}
 2. Wyrażam zgodę na przetwarzanie moich danych osobowych w celu realizacji, promocji i eksploatacji Filmu — na podstawie art. 6 ust. 1 lit. a RODO (zgoda) oraz art. 6 ust. 1 lit. f RODO (prawnie uzasadniony interes administratora); w zakresie wizerunku i wypowiedzi podstawą jest także zezwolenie z art. 81 pr. aut. powyżej.
-3. Dane mogą być przekazywane oraz powierzane podmiotom współpracującym przy produkcji, promocji i dystrybucji Filmu — w szczególności koproducentom, nadawcom, dystrybutorom, platformom emisyjnym, ubezpieczycielom oraz usługodawcom Administratora — w tym, w niezbędnym zakresie, do państw spoza Europejskiego Obszaru Gospodarczego, przy zapewnieniu poziomu ochrony nie niższego niż obowiązujący w Unii Europejskiej.
+3. Dane mogą być przekazywane oraz powierzane podmiotom współpracującym przy produkcji, promocji i dystrybucji Filmu — w szczególności koproducentom, nadawcom, dystrybutorom, platformom emisyjnym, ubezpieczycielom oraz usługodawcom Administratora — w tym, w niezbędnym zakresie, do państw spoza Europejskiego Obszaru Gospodarczego — z zastosowaniem zabezpieczeń przewidzianych w RODO (w szczególności standardowych klauzul umownych zatwierdzonych przez Komisję Europejską) i przy zapewnieniu poziomu ochrony nie niższego niż obowiązujący w Unii Europejskiej.
 4. Administrator ma prawo przenieść prawa i obowiązki związane z przetwarzaniem na swoich następców prawnych. Dane nie będą wykorzystywane do marketingu bezpośredniego bez odrębnej zgody ani do zautomatyzowanego podejmowania decyzji (profilowania).
 5. Dane będą przechowywane przez okres eksploatacji Filmu, a dokument zgody — dodatkowo przez okres przedawnienia roszczeń.
-6. Przysługuje mi prawo dostępu do danych i uzyskania ich kopii, sprostowania, usunięcia, ograniczenia przetwarzania, sprzeciwu oraz wniesienia skargi do Prezesa UODO.
+6. Przysługuje mi prawo dostępu do danych i uzyskania ich kopii, sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych, sprzeciwu oraz wniesienia skargi do Prezesa UODO.
 7. Zgodę na przetwarzanie danych (oraz zgodę dodatkową) mogę cofnąć w każdej chwili, niezależnie od pozostałych, ze skutkiem na przyszłość. Cofnięcie nie wpływa na zgodność z prawem przetwarzania dokonanego przed cofnięciem ani na nabyte zgodnie z prawem zezwolenie na rozpowszechnianie wizerunku w już wyprodukowanym materiale (art. 81 pr. aut. stanowi odrębną podstawę). Cofnięcie zgody może rodzić roszczenia odszkodowawcze po stronie Producenta, jeżeli spowoduje szkodę na polu realizacji lub promocji Filmu.
 8. Podanie danych jest dobrowolne, lecz niezbędne do udziału w Filmie.
 
@@ -321,10 +321,11 @@ Dokument podpisywany jest podpisem elektronicznym w formie dokumentowej (art. 77
 function summaryClause(cfg, proj, p) {
   const paid = !!proj.paid;
   const adminName = cfg._admin ? cfg._admin.name : cfg.producer;
+  const whose = p.isMinor ? "wizerunku, głosu i wypowiedzi Twojego dziecka (podopiecznego)" : "Twojego wizerunku, głosu i wypowiedzi";
   return (
 `W SKRÓCIE — najważniejsze w prostych słowach (pełne, wiążące warunki znajdują się poniżej)
 
-• Zgadzasz się na wykorzystanie Twojego wizerunku, głosu i wypowiedzi w filmie o roboczym tytule „${proj.name}” (tytuł może się jeszcze zmienić) oraz w jego promocji.
+• Zgadzasz się na wykorzystanie ${whose} w filmie o roboczym tytule „${proj.name}” (tytuł może się jeszcze zmienić) oraz w jego promocji.
 • Bez ograniczeń: kino, telewizja, internet, festiwale — w kraju i za granicą, bez limitu czasu.
 • Dotyczy wszystkich nagrań w ramach projektu, a nie tylko z dnia podpisu.
 • Materiał można montować, skracać, tłumaczyć i obrabiać — także przy użyciu sztucznej inteligencji (AI), np. do zmiany lub ukrycia głosu albo twarzy — nigdy w sposób obraźliwy.
@@ -481,15 +482,21 @@ function setupServiceWorker() {
     });
   }).catch(() => {});
 }
-function showUpdateBanner(worker) {
-  if (document.getElementById("update-banner")) return;
+let pendingUpdateWorker = null;
+function showUpdateBanner(worker) { pendingUpdateWorker = worker; renderUpdateBanner(); }
+function renderUpdateBanner() {
+  const existing = document.getElementById("update-banner");
+  // Nie pokazuj paska w trakcie wypełniania zgody — zasłaniałby przycisk „Dalej”.
+  const inWizard = $("view-wizard") && !$("view-wizard").hidden;
+  if (!pendingUpdateWorker || inWizard) { if (existing) existing.remove(); return; }
+  if (existing) return;
   const bar = document.createElement("div");
   bar.id = "update-banner";
   bar.innerHTML = `<span>✨ Dostępna nowa wersja aplikacji</span><button class="btn" id="btn-update">Odśwież</button>`;
   document.body.appendChild(bar);
   $("btn-update").addEventListener("click", () => {
     $("btn-update").textContent = "Aktualizuję…";
-    worker.postMessage({ type: "SKIP_WAITING" });
+    pendingUpdateWorker.postMessage({ type: "SKIP_WAITING" });
   });
 }
 
