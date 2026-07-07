@@ -512,7 +512,8 @@ async function boot() {
   window.addEventListener("online", () => { updateNetBadge(); scheduleSync(); flushOutbox(); });
   window.addEventListener("offline", updateNetBadge);
   ["click", "keydown", "pointerdown"].forEach(ev => document.addEventListener(ev, resetLockTimer, { passive: true }));
-  enterLogin();
+  // Odtwórz sesję (przeładowanie/aktualizacja nie wylogowują); gdy brak — normalny ekran PIN/rejestracji.
+  if (!(await tryRestoreSession())) enterLogin();
 }
 function updateNetBadge() {
   const b = $("net-status");
@@ -525,9 +526,32 @@ function resetLockTimer() {
   clearTimeout(S.lockTimer);
 }
 function lock() {
+  try { localStorage.removeItem("signoff-sess"); } catch (e) {}
   S.key = null; S.dekRaw = null; S.vault = null; S.records = []; S.wizard = null; S.user = null;
   clearTimeout(S.lockTimer);
   enterLogin();
+}
+/* Zapamiętanie sesji na urządzeniu, żeby przeładowanie/aktualizacja NIE wylogowywały.
+   Klucz (DEK) trzymany lokalnie do RĘCZNEGO wylogowania — świadomy kompromis wygoda↔bezpieczeństwo. */
+function persistSession() {
+  try { if (S.dekRaw && S.user) localStorage.setItem("signoff-sess", JSON.stringify({ accId: S.user.id, dek: b64.enc(S.dekRaw) })); } catch (e) {}
+}
+async function tryRestoreSession() {
+  try {
+    const raw = localStorage.getItem("signoff-sess");
+    if (!raw || !S.config) return false;
+    const { accId, dek } = JSON.parse(raw);
+    const acc = (S.config.accounts || []).find(a => a.id === accId && a.active);
+    if (!acc) return false;
+    S.dekRaw = b64.dec(dek);
+    S.key = await importDEK(S.dekRaw);
+    S.user = acc;
+    S.vault = await decryptJSON(S.key, await metaGet("vault"));
+    if (normalizeVault(S.vault)) await saveVault();
+    await loadRecords();
+    enterHome();
+    return true;
+  } catch (e) { try { localStorage.removeItem("signoff-sess"); } catch (e2) {} return false; }
 }
 
 /* --- pierwsze uruchomienie: tylko PIN pierwszego administratora; resztę ustawia się w aplikacji --- */
@@ -840,6 +864,7 @@ function applyRole() {
 /* ===================== Ekran główny ===================== */
 function enterHome() {
   resetLockTimer();
+  persistSession();
   applyRole();
   const projs = allowedProjects();
   const sel = $("project-select");
