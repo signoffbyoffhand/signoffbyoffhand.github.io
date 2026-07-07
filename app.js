@@ -526,24 +526,24 @@ function resetLockTimer() {
   clearTimeout(S.lockTimer);
 }
 function lock() {
+  metaSet("session", null).catch(() => {});
   try { localStorage.removeItem("signoff-sess"); } catch (e) {}
   S.key = null; S.dekRaw = null; S.vault = null; S.records = []; S.wizard = null; S.user = null;
   clearTimeout(S.lockTimer);
   enterLogin();
 }
-/* Zapamiętanie sesji na urządzeniu, żeby przeładowanie/aktualizacja NIE wylogowywały.
-   Klucz (DEK) trzymany lokalnie do RĘCZNEGO wylogowania — świadomy kompromis wygoda↔bezpieczeństwo. */
+/* Zapamiętanie sesji w IndexedDB (pewniejsze na iOS niż localStorage), żeby przeładowanie/aktualizacja
+   NIE wylogowywały. Klucz (DEK) trzymany lokalnie do RĘCZNEGO wylogowania — świadomy kompromis wygoda↔bezpieczeństwo. */
 function persistSession() {
-  try { if (S.dekRaw && S.user) localStorage.setItem("signoff-sess", JSON.stringify({ accId: S.user.id, dek: b64.enc(S.dekRaw) })); } catch (e) {}
+  if (S.dekRaw && S.user) metaSet("session", { accId: S.user.id, dek: S.dekRaw }).catch(() => {});
 }
 async function tryRestoreSession() {
   try {
-    const raw = localStorage.getItem("signoff-sess");
-    if (!raw || !S.config) return false;
-    const { accId, dek } = JSON.parse(raw);
-    const acc = (S.config.accounts || []).find(a => a.id === accId && a.active);
+    const sess = await metaGet("session");
+    if (!sess || !sess.dek || !S.config) return false;
+    const acc = (S.config.accounts || []).find(a => a.id === sess.accId && a.active);
     if (!acc) return false;
-    S.dekRaw = b64.dec(dek);
+    S.dekRaw = sess.dek;
     S.key = await importDEK(S.dekRaw);
     S.user = acc;
     S.vault = await decryptJSON(S.key, await metaGet("vault"));
@@ -551,7 +551,7 @@ async function tryRestoreSession() {
     await loadRecords();
     enterHome();
     return true;
-  } catch (e) { try { localStorage.removeItem("signoff-sess"); } catch (e2) {} return false; }
+  } catch (e) { metaSet("session", null).catch(() => {}); return false; }
 }
 
 /* --- pierwsze uruchomienie: tylko PIN pierwszego administratora; resztę ustawia się w aplikacji --- */

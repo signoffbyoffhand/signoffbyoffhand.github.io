@@ -1,7 +1,7 @@
 /* SignOff service worker — pełny offline + bezpieczna automatyczna aktualizacja.
    Nowa wersja pobiera się w tle (gdy online), ale aktywuje się dopiero gdy użytkownik
    dotknie „Odśwież" albo przy następnym otwarciu aplikacji — nigdy w trakcie zgody. */
-const CACHE = "signoff-v87";
+const CACHE = "signoff-v88";
 // CORE — powłoka aplikacji: precache blokujący, apka gotowa i offline od razu.
 const CORE = [
   "./", "index.html", "style.css", "app.js", "manifest.json",
