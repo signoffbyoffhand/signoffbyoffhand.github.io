@@ -149,6 +149,12 @@ input:not([type]), input[type=text], input[type=email], input[type=tel], input[t
   font-size: 1rem; font-family: var(--ui); background: var(--card-flat); color: var(--ink);
 }
 input:focus { outline: none; border-color: var(--accent-line-strong); box-shadow: 0 0 0 3px rgba(52,205,146,.15); }
+/* iOS: pola z czcionką <16px powodują automatyczne przybliżanie i „lag” przy dotknięciu.
+   Na urządzeniach dotykowych (telefon/tablet) wymuszamy 16px — desktop bez zmian. */
+@media (pointer: coarse) {
+  input:not([type]), input[type=text], input[type=email], input[type=tel], input[type=password], input[type=search],
+  textarea, select { font-size: 16px !important; }
+}
 label { font-weight: 500; font-size: .9rem; display: block; margin: 12px 0 0; color: var(--ink-2); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
 @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
@@ -393,6 +399,9 @@ option { background: #142440; color: var(--ink); }
 .proj-card .proj-name { flex: 1; min-width: 0; width: 100%; font-size: 1.02rem; font-weight: 600; border: 1px solid transparent; background: transparent; padding: 4px 8px; margin: 0; border-radius: 8px; max-width: 100%; color: var(--ink); }
 .proj-name:hover { border-color: var(--line); }
 .proj-name:focus { border-color: var(--accent-line-strong); background: var(--card-flat); outline: none; }
+.proj-paid { margin: 10px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card-flat); }
+.proj-paid .tiny-check { margin: 6px 0; }
+.proj-fee-wrap { margin-top: 8px; }
 .proj-card textarea {
   width: 100%; margin-top: 5px; padding: 11px 13px; font: inherit; font-size: .9rem; font-family: var(--ui);
   border: 1px solid var(--line-strong); border-radius: 12px; resize: vertical;
@@ -596,8 +605,8 @@ details.adv summary b { color: var(--ink-2); }
 .seg > .on { background: var(--accent); color: var(--on-accent); font-weight: 600; }
 
 /* ---------- Kreator treść: gradientowy fade na dole pola treści (wzorzec) ---------- */
-#consent-text { position: relative; }
-#consent-text::after {
+.consent-text { position: relative; }
+.consent-text::after {
   content: ""; position: sticky; display: block; left: 0; right: 0; bottom: 0;
   height: 56px; margin-top: -56px; pointer-events: none;
   background: linear-gradient(to top, var(--bg-screen) 8%, rgba(15,29,51,0));
@@ -605,14 +614,69 @@ details.adv summary b { color: var(--ink-2); }
   opacity: 1; transition: opacity .18s ease;
 }
 /* po dojechaniu do końca (lub gdy treść mieści się bez przewijania) — brak zasłony na ostatnich linijkach */
-#consent-text.at-end::after { opacity: 0; }
+.consent-text.at-end::after { opacity: 0; }
+
+/* ---------- Kreator: karta „W skrócie” + sekcje zgód (tekst + checkbox razem) ---------- */
+.summary-card {
+  background: rgba(52,205,146,.06); border: 1px solid var(--accent-line); border-radius: 14px;
+  padding: 14px 16px; margin: 6px 0 16px; white-space: pre-wrap; color: var(--ink-2);
+  font-size: .9rem; line-height: 1.6;
+}
+.wizard-paid { margin: 14px 0 4px; display: flex; flex-direction: column; gap: 8px; }
+.paid-opt { display: flex; align-items: center; gap: 12px; cursor: pointer; color: var(--ink-2); }
+.paid-opt input[type=radio] {
+  appearance: none; -webkit-appearance: none; flex: 0 0 auto; border-radius: 50%;
+  border: 2px solid var(--line-strong); background: transparent; position: relative;
+}
+.paid-opt input[type=radio]:checked { border-color: var(--accent); }
+.paid-opt input[type=radio]:checked::after {
+  content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--accent);
+}
+/* bezpłatny — większy, wyróżniony (domyślny) */
+.paid-big {
+  padding: 14px 16px; border: 1px solid var(--accent-line); border-radius: 14px;
+  background: rgba(52,205,146,.06); font-size: 1rem;
+}
+.paid-big input[type=radio] { width: 22px; height: 22px; }
+.paid-big b { color: var(--ink); }
+/* płatny — drobny, nierzucający się (do ewentualnego zaznaczenia) */
+.paid-small { padding: 2px 16px; font-size: .82rem; color: var(--ink-3); }
+.paid-small input[type=radio] { width: 17px; height: 17px; }
+/* jedna spójna karta: tekst + zgoda pod nim, wspólna ramka i linia działowa */
+.consent-section {
+  margin: 0 0 16px; border: 1px solid var(--line); border-radius: 16px;
+  overflow: hidden; background: var(--card-flat);
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.consent-section:has(input:checked) { border-color: var(--accent-line-strong); }
+.consent-section:has(.big-check.consent-missing) {
+  border-color: #ff6d6b; box-shadow: 0 0 0 1px rgba(255,86,86,.4), 0 0 16px rgba(255,86,86,.22);
+  animation: consentShake .32s ease;
+}
+.consent-section .consent-text { border: 0; border-radius: 0; margin: 0; background: transparent; }
+.consent-section .big-check {
+  border: 0; border-radius: 0; margin: 0; background: transparent;
+  border-top: 1px solid var(--line); box-shadow: none; animation: none;
+}
+.consent-section .big-check:has(input:checked) { background: rgba(52,205,146,.05); border-top-color: var(--accent-line); }
+
+/* ---------- elegancki, cienki pasek przewijania (cała aplikacja) ---------- */
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.16) transparent; }
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.16); border-radius: 99px;
+  border: 3px solid transparent; background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.30); background-clip: padding-box; }
+
 /* plakietki OBOWIĄZKOWE / DOBROWOLNE przy checkboxach zgód (Space Mono, wzorzec) */
-#consent-checks .req-star {
+.big-check .req-star {
   display: inline-block; margin-top: 6px; font-family: var(--mono);
   font-size: .6rem; letter-spacing: .04em; padding: 2px 8px; border-radius: 5px;
   background: var(--accent); color: var(--on-accent);
 }
-#consent-checks .opt-star {
+.big-check .opt-star {
   display: inline-block; margin-top: 6px; font-family: var(--mono);
   font-size: .6rem; letter-spacing: .04em; padding: 2px 8px; border-radius: 5px;
   background: rgba(188,230,79,.15); color: var(--lime);

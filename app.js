@@ -263,47 +263,95 @@ function adminLine(a) {
 }
 
 /* ===================== Szablon zgody ===================== */
-const TEMPLATE_VERSION = "3.1-PL";
+const TEMPLATE_VERSION = "4.8-PL";
 function defaultClause(cfg, proj, p) {
   const who = p.isMinor
     ? `Ja, ${p.gfirst} ${p.glast}, działając jako rodzic/opiekun prawny małoletniego(-iej) ${p.first} ${p.last},`
     : `Ja, ${p.first} ${p.last},`;
-  const today = new Date().toLocaleDateString("pl-PL");
+  const subj = p.isMinor
+    ? "wizerunku, głosu, wypowiedzi i podobizny małoletniego(-iej), a także jego/jej artystycznych wykonań (o ile występują)"
+    : "mojego wizerunku, głosu, wypowiedzi i podobizny, a także moich artystycznych wykonań (o ile występują)";
+  const paid = !!proj.paid;
+  const grant = paid ? "" : "nieodpłatnego, ";
   return (
-`ZEZWOLENIE NA ROZPOWSZECHNIANIE WIZERUNKU (art. 81 pr. aut.)
+`ZEZWOLENIE NA ROZPOWSZECHNIANIE WIZERUNKU I WYPOWIEDZI (art. 81 pr. aut.) ORAZ PRZENIESIENIE PRAW
 
-${who} wyrażam zgodę na nieodpłatne utrwalenie i rozpowszechnianie ${p.isMinor ? "wizerunku oraz wypowiedzi małoletniego(-iej)" : "mojego wizerunku oraz moich wypowiedzi"} zarejestrowanych w dniu ${today} przez ${cfg.producer} w ramach projektu „${proj.name}”, na wszystkich znanych polach eksploatacji, bez ograniczeń terytorialnych i czasowych, w tym w szczególności: w kinach, telewizji, na platformach streamingowych (VOD), w internecie, na festiwalach oraz we fragmentach wykorzystywanych w zwiastunach — wraz z prawem do udzielania sublicencji i przeniesienia praw na dystrybutorów.
+${who} niniejszym udzielam ${cfg.producer} (dalej „Producent”) ${grant}nieograniczonego czasowo ani terytorialnie zezwolenia na utrwalanie oraz rozpowszechnianie ${subj}, utrwalonych w nagraniach audiowizualnych oraz na zdjęciach (dalej łącznie „Nagrania”), w związku z realizacją filmu prowadzonego pod roboczym tytułem „${proj.name}” (dalej „Film”), niezależnie od jego ostatecznego tytułu. Zezwolenie dotyczy wszystkich Nagrań powstałych w ramach tego przedsięwzięcia, we wszystkich fazach produkcji i niezależnie od daty ich powstania (a nie tylko z dnia podpisania niniejszego oświadczenia).
 
-Zezwolenie obejmuje montaż, kadrowanie i zestawianie zarejestrowanego materiału z innymi materiałami, z poszanowaniem dóbr osobistych. Zezwolenie udzielane jest na rzecz ${cfg.producer} oraz jego następców prawnych.`);
+Zezwolenie obejmuje korzystanie z Nagrań w ramach Filmu oraz utworów, do których Film zostanie włączony, w całości i we fragmentach, w celach realizacji, promocji, reklamy oraz eksploatacji Filmu, na wszelkich nośnikach i we wszelkich mediach — znanych obecnie oraz powstałych w przyszłości — w najszerszym dopuszczalnym prawem zakresie, w szczególności na następujących polach eksploatacji:
+• utrwalanie i zwielokrotnianie Nagrań dowolną techniką i na dowolnym nośniku (m.in. techniką cyfrową, magnetyczną, światłoczułą, optyczną, drukarską oraz zapisu komputerowego), w nieograniczonej liczbie egzemplarzy, w tym na nośnikach wideo, DVD, CD, na taśmie światłoczułej i magnetycznej oraz na dysku komputerowym;
+• wprowadzanie egzemplarzy do obrotu, ich użyczanie oraz najem;
+• wprowadzanie Nagrań do pamięci komputera oraz do sieci teleinformatycznych i telekomunikacyjnych (w tym Internetu), a także do pamięci serwerów funkcjonujących w takich sieciach;
+• publiczne wykonanie, wystawienie, wyświetlenie i odtworzenie (w tym w kinach, na festiwalach i pokazach, na pokładach samolotów i statków oraz w hotelach);
+• nadawanie za pomocą wizji lub fonii, przewodowe i bezprzewodowe, przez stację naziemną;
+• nadawanie za pośrednictwem satelity (przekaz satelitarny), w sposób kodowany i niekodowany;
+• reemitowanie, tj. równoczesne i integralne rozpowszechnianie Nagrań przez podmiot inny niż pierwotnie nadający — w tym w sieciach telewizji kablowej, w sieciach telekomunikacyjnych i internetowych oraz na platformach cyfrowych, a także w ramach telewizji mobilnej (DVB-H, DVB-SH), w tym simulcasting i webcasting;
+• rozpowszechnianie w ramach odpłatności za pokaz (pay-per-view), tj. za opłatą wnoszoną przez użytkownika końcowego za pojedynczy dostęp;
+• rozpowszechnianie w ramach usługi wideo na żądanie (video-on-demand, near-video-on-demand, push-video-on-demand) we wszelkich formułach (w tym TVOD, AVOD, FVOD i SVOD) oraz w ramach abonamentu na żądanie (subscription-on-demand / SVOD);
+• publiczne udostępnianie Nagrań w taki sposób, aby każdy mógł mieć do nich dostęp w wybranym przez siebie miejscu i czasie, w tym streaming, downloading i podcasting;
+• wykorzystanie w celu promocji i reklamy Filmu, jego producentów, nadawców i dystrybutorów — w szczególności w zwiastunach, plakatach, publikacjach, mediach społecznościowych oraz w przekazach reklamowych każdego rodzaju; merchandising;
+• eksploatacja dla celów kronikarskich, archiwalnych, dokumentacyjnych, edukacyjnych, reporterskich i przeglądowych, łącznie lub rozłącznie z innymi utworami;
+• tłumaczenie, przystosowywanie i zmiana układu Nagrań oraz tworzenie i korzystanie z opracowań (utworów zależnych), w tym w innych wersjach językowych.
+
+Producent jest uprawniony do montażu, kadrowania, skracania, uzupełniania, adaptacji, opracowywania oraz zestawiania Nagrań z innymi materiałami, według swojego uznania — w tym z wykorzystaniem narzędzi sztucznej inteligencji (AI), na przykład do obróbki obrazu i dźwięku, zmiany lub ukrycia głosu albo twarzy (anonimizacja), poprawy jakości oraz tworzenia materiałów pochodnych — z poszanowaniem moich dóbr osobistych i bez prawa do wykorzystania w sposób obraźliwy lub ogólnie uznany za nieetyczny. Zezwolenie udzielane jest na rzecz Producenta oraz jego następców prawnych, przy czym Producent ma prawo przenieść nabyte prawa oraz udzielać dalszych zgód, upoważnień i licencji na rzecz osób trzecich — w szczególności koproducentów, dystrybutorów, nadawców i platform — bez konieczności uzyskiwania mojej dodatkowej zgody.
+
+Zrzekam się roszczeń (istniejących i przyszłych) wobec Producenta oraz jego następców prawnych z tytułu korzystania z Nagrań w sposób zgodny z niniejszym oświadczeniem; zrzeczenie to nie obejmuje roszczeń z tytułu naruszenia moich dóbr osobistych ani wykorzystania Nagrań w sposób sprzeczny z niniejszym oświadczeniem.
+
+${paid
+  ? `Zezwoleń i zgód objętych niniejszym oświadczeniem udzielam za wynagrodzeniem, którego wysokość i warunki reguluje odrębny dokument (umowa). Wynagrodzenie to wyczerpuje wszelkie moje roszczenia z tytułu udziału w Filmie oraz udzielonych praw i zgód. Z uwagi na odpłatny charakter niniejszego oświadczenia udzielone zezwolenia oraz przeniesienie praw są nieodwołalne w najszerszym dopuszczalnym prawem zakresie i nie mogą być przeze mnie jednostronnie wypowiedziane ani odwołane w okresie trwania ochrony tych praw; nie ogranicza to prawa do cofnięcia zgody na przetwarzanie danych osobowych (RODO) na zasadach opisanych w klauzuli poniżej.`
+  : `Możliwość udziału w Filmie stanowi należyte i wyłączne wynagrodzenie z tytułu udzielonych zezwoleń i zgód; nie przysługuje mi z tego tytułu żadne inne wynagrodzenie, niezależnie od tego, czy Nagrania zostaną wykorzystane w Filmie.`}`);
 }
 function rodoClause(cfg) {
   return (
-`KLAUZULA INFORMACYJNA RODO (art. 13 RODO)
+`KLAUZULA INFORMACYJNA I ZGODA — DANE OSOBOWE (RODO)
 
-1. Administratorem danych osobowych (w tym wizerunku) jest ${cfg._admin ? adminLine(cfg._admin) : cfg.producer}.${cfg._admin && cfg._admin.email ? `\n   Kontakt w sprawie ochrony danych i realizacji praw: ${cfg._admin.email}.` : ""}
-2. Dane przetwarzane są w celu realizacji, promocji i eksploatacji projektu — na podstawie art. 6 ust. 1 lit. a RODO (zgoda) oraz art. 6 ust. 1 lit. f RODO (prawnie uzasadniony interes administratora).
-3. Dane mogą być przekazywane koproducentom, dystrybutorom, ubezpieczycielom i platformom emisyjnym — wyłącznie w zakresie niezbędnym do eksploatacji projektu.
-4. Dane będą przechowywane przez okres eksploatacji projektu, a dokument zgody — dodatkowo przez okres przedawnienia roszczeń.
-5. Przysługuje Pani/Panu prawo dostępu do danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, sprzeciwu oraz skargi do Prezesa UODO.
-6. Każdą z wyrażonych zgód — w tym zgodę dodatkową na przesyłanie informacji o przyszłych projektach i ofert współpracy — można cofnąć w każdej chwili, niezależnie od pozostałych, ze skutkiem na przyszłość. Cofnięcie nie wpływa na zgodność z prawem przetwarzania dokonanego przed cofnięciem ani na nabyte zgodnie z prawem zezwolenie na rozpowszechnianie wizerunku w już wyprodukowanym materiale (art. 81 pr. aut. stanowi odrębną podstawę).
-7. Podanie danych jest dobrowolne, lecz niezbędne do udziału w projekcie.
+1. Administratorem danych osobowych (w tym wizerunku, głosu, imienia i nazwiska oraz podanych danych kontaktowych) jest ${cfg._admin ? adminLine(cfg._admin) : cfg.producer}.${cfg._admin && cfg._admin.email ? `\n   Kontakt w sprawie ochrony danych i realizacji praw: ${cfg._admin.email}.` : ""}
+2. Wyrażam zgodę na przetwarzanie moich danych osobowych w celu realizacji, promocji i eksploatacji Filmu — na podstawie art. 6 ust. 1 lit. a RODO (zgoda) oraz art. 6 ust. 1 lit. f RODO (prawnie uzasadniony interes administratora); w zakresie wizerunku i wypowiedzi podstawą jest także zezwolenie z art. 81 pr. aut. powyżej.
+3. Dane mogą być przekazywane oraz powierzane podmiotom współpracującym przy produkcji, promocji i dystrybucji Filmu — w szczególności koproducentom, nadawcom, dystrybutorom, platformom emisyjnym, ubezpieczycielom oraz usługodawcom Administratora — w tym, w niezbędnym zakresie, do państw spoza Europejskiego Obszaru Gospodarczego, przy zapewnieniu poziomu ochrony nie niższego niż obowiązujący w Unii Europejskiej.
+4. Administrator ma prawo przenieść prawa i obowiązki związane z przetwarzaniem na swoich następców prawnych. Dane nie będą wykorzystywane do marketingu bezpośredniego bez odrębnej zgody ani do zautomatyzowanego podejmowania decyzji (profilowania).
+5. Dane będą przechowywane przez okres eksploatacji Filmu, a dokument zgody — dodatkowo przez okres przedawnienia roszczeń.
+6. Przysługuje mi prawo dostępu do danych i uzyskania ich kopii, sprostowania, usunięcia, ograniczenia przetwarzania, sprzeciwu oraz wniesienia skargi do Prezesa UODO.
+7. Zgodę na przetwarzanie danych (oraz zgodę dodatkową) mogę cofnąć w każdej chwili, niezależnie od pozostałych, ze skutkiem na przyszłość. Cofnięcie nie wpływa na zgodność z prawem przetwarzania dokonanego przed cofnięciem ani na nabyte zgodnie z prawem zezwolenie na rozpowszechnianie wizerunku w już wyprodukowanym materiale (art. 81 pr. aut. stanowi odrębną podstawę). Cofnięcie zgody może rodzić roszczenia odszkodowawcze po stronie Producenta, jeżeli spowoduje szkodę na polu realizacji lub promocji Filmu.
+8. Podanie danych jest dobrowolne, lecz niezbędne do udziału w Filmie.
 
 INFORMACJA O PODPISIE ELEKTRONICZNYM
 
 Dokument podpisywany jest podpisem elektronicznym w formie dokumentowej (art. 77² Kodeksu cywilnego). Zapisywany jest wyłącznie obraz podpisu — aplikacja nie rejestruje danych biometrycznych. Dokument otrzymuje znacznik czasu, sumę kontrolną SHA-256 oraz kartę dowodową (audit trail). Kopia dokumentu zostanie przekazana podpisującemu.`);
 }
-function consentText(cfg, proj, p) {
+function summaryClause(cfg, proj, p) {
+  const paid = !!proj.paid;
+  const adminName = cfg._admin ? cfg._admin.name : cfg.producer;
+  return (
+`W SKRÓCIE — najważniejsze w prostych słowach (pełne, wiążące warunki znajdują się poniżej)
+
+• Zgadzasz się na wykorzystanie Twojego wizerunku, głosu i wypowiedzi w filmie o roboczym tytule „${proj.name}” (tytuł może się jeszcze zmienić) oraz w jego promocji.
+• Bez ograniczeń: kino, telewizja, internet, festiwale — w kraju i za granicą, bez limitu czasu.
+• Dotyczy wszystkich nagrań w ramach projektu, a nie tylko z dnia podpisu.
+• Materiał można montować, skracać, tłumaczyć i obrabiać — także przy użyciu sztucznej inteligencji (AI), np. do zmiany lub ukrycia głosu albo twarzy — nigdy w sposób obraźliwy.
+• Prawa nabywa ${adminName} i może je przekazać dalej (koproducenci, dystrybutorzy, platformy).
+• ${paid ? "Za udział otrzymasz wynagrodzenie — jego wysokość reguluje odrębny dokument (umowa)." : "Nie otrzymujesz wynagrodzenia — sam udział w filmie jest „wynagrodzeniem”."}
+• Twoje dane osobowe: przetwarzane do realizacji i promocji filmu. Masz prawo wglądu, poprawy i usunięcia, a zgodę na dane (RODO) możesz cofnąć w każdej chwili.`);
+}
+// Rozbite części zgody: streszczenie, sekcja wizerunkowa (+ przypięte zgody z biblioteki), sekcja RODO.
+// Wyświetlane osobno w kreatorze; sklejone przez consentText() do rekordu/PDF/hasza.
+function consentParts(cfg, proj, p) {
   const admin = projectAdmin(proj);
   const acfg = Object.assign({}, cfg, { producer: admin ? admin.name : cfg.producer, _admin: admin });
-  const body = (proj.customText || "").trim() || defaultClause(acfg, proj, p);
-  // dodatkowe zgody tekstowe przypięte do projektu (z biblioteki) — wchodzą w treść (drukowane i hashowane)
-  let extra = "";
+  const usingCustom = !!(proj.customText || "").trim();
+  const summary = usingCustom ? "" : summaryClause(acfg, proj, p);
+  let image = usingCustom ? proj.customText.trim() : defaultClause(acfg, proj, p);
+  // dodatkowe zgody tekstowe przypięte do projektu (z biblioteki) — dołączane do sekcji wizerunkowej
   for (const it of projectLibrary(proj, "zgoda")) {
     if (it.type === "text" && (it.text || "").trim()) {
-      extra += "\n\n" + (it.name ? it.name.toUpperCase() + "\n\n" : "") + it.text.trim();
+      image += "\n\n" + (it.name ? it.name.toUpperCase() + "\n\n" : "") + it.text.trim();
     }
   }
-  return body + extra + "\n\n" + rodoClause(acfg);
+  return { summary, image, rodo: rodoClause(acfg) };
+}
+function consentText(cfg, proj, p) {
+  const { summary, image, rodo } = consentParts(cfg, proj, p);
+  const head = summary ? summary + "\n\n————————————————————\n\n" : "";
+  return head + image + "\n\n" + rodo;
 }
 
 /* ===================== Audit trail ===================== */
@@ -1493,13 +1541,14 @@ function startWizard() {
     id: uuid(), audit: [], device: deviceInfo(), geo: null,
     signature: null, photo: null, startedAt: new Date().toISOString(),
     projectId: proj.id, projectName: proj.name,
-    attachChecks: {},
+    attachChecks: {}, paid: false,
   };
   auditEvent(S.wizard, "start", `otwarto formularz zgody (projekt: ${proj.name}, zbiera: ${S.user.name} [${S.user.role}])`);
   ensureGeoPrimed().then(() => tryGeolocate(S.wizard));
   $("wizard-project-label").textContent = `Projekt: ${proj.name} · Zbiera: ${S.user.name}`;
   ["f-first", "f-last", "f-email", "f-phone", "f-doc", "f-role", "f-gfirst", "f-glast"].forEach(id => $(id).value = "");
   $("f-minor").checked = false; $("guardian-box").hidden = true;
+  $("wiz-paid-no").checked = true; $("wiz-paid-yes").checked = false;
   ["c-image", "c-rodo", "c-marketing"].forEach(id => { $(id).checked = false; $(id).disabled = true; });
   clearSignature();
   resetCamera();
@@ -1555,7 +1604,7 @@ function validateStep(n) {
       else if (label) label.classList.remove("consent-missing");
     });
     if (missingConsent) {
-      const first = document.querySelector("#consent-checks .big-check.consent-missing");
+      const first = document.querySelector("#wstep-2 .big-check.consent-missing");
       if (first) first.scrollIntoView({ block: "center", behavior: "smooth" });
       return false;
     }
@@ -1586,21 +1635,32 @@ function validateStep(n) {
 }
 
 /* --- krok 2: treść + dokumenty + scroll-to-enable --- */
+// Renderuje treść (streszczenie + sekcje) dla wybranego wariantu bezpłatny/płatny (S.wizard.paid).
+function renderConsentContent() {
+  const proj = activeProject();
+  const effProj = Object.assign({}, proj, { paid: !!S.wizard.paid });
+  const parts = consentParts(S.vault, effProj, S.wizard.person);
+  // pełna, sklejona treść do rekordu/PDF/hasza — zależna od wariantu
+  S.wizard.templateText = consentText(S.vault, effProj, S.wizard.person);
+  // „W skrócie” jako osobna karta (ukryta przy własnej treści projektu)
+  const sum = $("consent-summary");
+  if (parts.summary) { sum.textContent = parts.summary; sum.hidden = false; } else { sum.textContent = ""; sum.hidden = true; }
+  // dwie sekcje treści z osobnymi polami + gradient znikający po dojechaniu do końca każdego
+  const fade = (box) => {
+    if (!box) return;
+    const upd = () => box.classList.toggle("at-end", box.scrollHeight - box.clientHeight - box.scrollTop < 8);
+    box.scrollTop = 0; box.onscroll = upd; setTimeout(upd, 0);
+  };
+  const imgBox = $("consent-text-image"), rodoBox = $("consent-text-rodo");
+  imgBox.textContent = parts.image; fade(imgBox);
+  rodoBox.textContent = parts.rodo; fade(rodoBox);
+}
 function prepareConsentStep() {
   const proj = activeProject();
-  const box = $("consent-text");
-  S.wizard.templateText = consentText(S.vault, proj, S.wizard.person);
-  box.textContent = S.wizard.templateText;
-  box.scrollTop = 0;
-  // gradient na dole znika po dojechaniu do końca (i gdy treść mieści się bez przewijania),
-  // żeby ostatnie linijki dokumentu były w pełni czytelne
-  const updateConsentFade = () => {
-    const atEnd = box.scrollHeight - box.clientHeight - box.scrollTop < 8;
-    box.classList.toggle("at-end", atEnd);
-  };
-  box.onscroll = updateConsentFade;
-  setTimeout(updateConsentFade, 0);
-  auditEvent(S.wizard, "treść", `wyświetlono treść zgody (szablon ${TEMPLATE_VERSION}${proj.customText ? ", treść własna projektu" : ""})`);
+  // wariant bezpłatny/płatny wybrany w kroku 1 (formularz) — determinuje treść tutaj
+  S.wizard.paid = !!$("wiz-paid-yes").checked;
+  renderConsentContent();
+  auditEvent(S.wizard, "treść", `wyświetlono treść zgody (szablon ${TEMPLATE_VERSION}, udział ${S.wizard.paid ? "płatny" : "bezpłatny"}${proj.customText ? ", treść własna projektu" : ""})`);
   // zgody dostępne od razu — bez wymuszania przewijania
   ["c-image", "c-rodo", "c-marketing"].forEach(id => { const cb = $(id); cb.disabled = false; const lbl = cb.closest(".big-check"); if (lbl) lbl.classList.remove("consent-missing"); });
   $("c-image").required = true; $("c-rodo").required = true; $("c-marketing").required = false;
@@ -1801,7 +1861,7 @@ $("btn-save").addEventListener("click", async () => {
       id: w.id, createdAt: new Date().toISOString(), startedAt: w.startedAt,
       projectId: w.projectId, projectName: w.projectName, producer: (projectAdmin(wproj) || {}).name || S.vault.producer,
       operator: S.user.name, operatorRole: S.user.role, operatorId: S.user.id,
-      templateVersion: TEMPLATE_VERSION, templateText: w.templateText,
+      templateVersion: TEMPLATE_VERSION, templateText: w.templateText, paid: !!w.paid,
       person: w.person, consents: w.consents, attachments: w.attachments || [],
       signature: w.signature, photo: w.photo,
       audit: w.audit, device: w.device, geo: w.geo,
@@ -2672,7 +2732,7 @@ async function buildPDF(r) {
   y -= 8;
 
   text("WYRAŻONE ZGODY", { bold: true, size: 10.5, gap: 5 });
-  text("[X] Zezwolenie na rozpowszechnianie wizerunku (art. 81 pr. aut.) — UDZIELONE", { size: 9.5 });
+  text("[X] Zezwolenie na rozpowszechnianie wizerunku, głosu i wypowiedzi oraz przeniesienie praw (art. 81 pr. aut.) — UDZIELONE", { size: 9.5 });
   text("[X] Zgoda na przetwarzanie danych osobowych (art. 6 ust. 1 lit. a RODO) — UDZIELONA", { size: 9.5 });
   text(`[${r.consents.marketing ? "X" : "  "}] Zgoda dodatkowa (informacje o przyszłych projektach i oferty współpracy) — ${r.consents.marketing ? "UDZIELONA" : "NIEUDZIELONA"}`, { size: 9.5, gap: 6 });
   if ((r.attachments || []).length) {

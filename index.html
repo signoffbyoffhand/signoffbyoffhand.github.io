@@ -188,24 +188,34 @@
           <label>Nazwisko opiekuna *<input type="text" id="f-glast" autocomplete="off"></label>
         </div>
       </div>
+      <div class="wizard-paid">
+        <label class="paid-opt paid-big"><input type="radio" name="wiz-paid" id="wiz-paid-no" checked><span>💚 <b>Udział bezpłatny</b> — udział w filmie jest jedynym „wynagrodzeniem”</span></label>
+        <label class="paid-opt paid-small"><input type="radio" name="wiz-paid" id="wiz-paid-yes"><span>Udział płatny — za wynagrodzeniem (ustalane odrębnie)</span></label>
+      </div>
       <p class="error" id="err-1" hidden></p>
       <div class="wnav"><span></span><button class="btn primary big" data-next="2">Dalej →</button></div>
     </div>
 
     <div class="wstep" id="wstep-2" hidden>
       <h2>2. Treść zgody i dokumenty</h2>
-      <p class="muted">Przeczytaj poniższą treść do końca (przewiń) — zawiera <b>zezwolenie na rozpowszechnianie wizerunku</b> oraz <b>klauzulę informacyjną RODO</b>, do których odnoszą się zgody na dole. Zgody oznaczone <span class="req-star">✱</span> są obowiązkowe.</p>
-      <div class="consent-text" id="consent-text"></div>
-      <div id="attach-box"></div>
-      <div id="consent-checks">
+      <p class="muted">Przeczytaj każdą sekcję i zaznacz zgodę bezpośrednio pod nią. Zgody oznaczone <span class="req-star">✱</span> są obowiązkowe.</p>
+      <div class="summary-card" id="consent-summary" hidden></div>
+      <div class="consent-section">
+        <div class="consent-text" id="consent-text-image"></div>
         <label class="check big-check">
           <input type="checkbox" id="c-image">
-          <span><b>Zezwolenie na rozpowszechnianie wizerunku</b> (art. 81 ustawy o prawie autorskim i prawach pokrewnych) — w zakresie opisanym powyżej. <span class="req-star">✱ obowiązkowe</span></span>
+          <span><b>Zezwolenie na rozpowszechnianie wizerunku, głosu i wypowiedzi oraz przeniesienie praw</b> (art. 81 pr. aut.) — w pełnym zakresie opisanym w treści powyżej. <span class="req-star">✱ obowiązkowe</span></span>
         </label>
+      </div>
+      <div class="consent-section">
+        <div class="consent-text" id="consent-text-rodo"></div>
         <label class="check big-check">
           <input type="checkbox" id="c-rodo">
           <span><b>Zgoda na przetwarzanie danych osobowych</b> (art. 6 ust. 1 lit. a RODO) — zgodnie z klauzulą informacyjną powyżej. <span class="req-star">✱ obowiązkowe</span></span>
         </label>
+      </div>
+      <div id="attach-box"></div>
+      <div class="consent-section">
         <label class="check big-check">
           <input type="checkbox" id="c-marketing">
           <span><b>Zgoda dodatkowa:</b> przesyłanie informacji o przyszłych projektach oraz ofert współpracy. <span class="opt-star">dobrowolne</span></span>
